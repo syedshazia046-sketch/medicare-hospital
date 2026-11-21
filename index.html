@@ -282,4 +282,412 @@
 
       <div class="flex gap-2 mb-5 border-b border-slate-200 pb-3">
         <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 py-2 text-sm font-bold rounded-lg bg-teal-600 text-white">Login</button>
-        <button id="tabSignup" onclick="switchAuthTab('signup')" class="flex-1 py-2 text-sm font-bold rounded-
+        <button id="tabSignup" onclick="switchAuthTab('signup')" class="flex-1 py-2 text-sm font-bold rounded-lg bg-slate-100 text-slate-700">Create Account</button>
+      </div>
+
+      <!-- Google Login / Sign Up -->
+      <button onclick="signInWithGoogle()" class="w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 font-semibold text-sm text-slate-800 flex items-center justify-center gap-2.5 transition">
+        <svg class="w-4 h-4" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.54-1.14 2.85-2.4 3.72v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.21z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="relative my-5 text-center">
+        <span class="bg-white px-2 text-xs text-slate-400 uppercase relative z-10">or with email</span>
+        <div class="border-t border-slate-200 absolute inset-x-0 top-1/2"></div>
+      </div>
+
+      <!-- Email + Password Form -->
+      <form id="emailAuthForm" onsubmit="handleEmailAuth(event)" class="space-y-3.5">
+        <div id="fullNameField" class="hidden">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+          <input id="authFullName" type="text" placeholder="Your full name" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+          <input id="authEmail" type="email" required placeholder="you@example.com" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+          <input id="authPassword" type="password" required minlength="6" placeholder="Minimum 6 characters" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm" />
+        </div>
+
+        <button id="authSubmitBtn" type="submit" class="w-full py-2.5 rounded-xl bg-teal-600 text-white font-semibold text-sm hover:bg-teal-700 transition">
+          Login with Email
+        </button>
+      </form>
+
+      <p id="authError" class="text-xs text-red-600 mt-3 font-medium"></p>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://bhltltxzqeuibvlvfmer.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_MRW2MNBJaU_uLD90oQa4QQ_1Hu8Xq8f";
+    const JAVA_API_BASE = "http://localhost:8080/api";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let authMode = "login";
+    let currentUser = null;
+    let javaApiOnline = false;
+    let departments = [];
+    let doctors = [];
+
+    const fallbackDepartments = [
+      { id: 1, name: "Cardiology", description: "Heart care, ECG, echo & cardiac specialists." },
+      { id: 2, name: "Neurology", description: "Brain, spine & nervous system care." },
+      { id: 3, name: "Orthopedics", description: "Bones, joints & sports injury care." },
+      { id: 4, name: "Pediatrics", description: "Child & infant specialist care." },
+      { id: 5, name: "General Medicine", description: "Primary care & health checkups." }
+    ];
+
+    const fallbackDoctors = [
+      { id: 1, name: "Dr. Arvind Sharma", department_id: 1, dept_name: "Cardiology", qualification: "MD, DM", experience_years: 15, consultation_fee: 800, available_days: "Mon, Wed, Fri" },
+      { id: 2, name: "Dr. Priya Nair", department_id: 2, dept_name: "Neurology", qualification: "MD, DM", experience_years: 12, consultation_fee: 750, available_days: "Tue, Thu, Sat" },
+      { id: 3, name: "Dr. Rajesh Verma", department_id: 3, dept_name: "Orthopedics", qualification: "MS", experience_years: 18, consultation_fee: 700, available_days: "Mon - Sat" },
+      { id: 4, name: "Dr. Sneha Reddy", department_id: 4, dept_name: "Pediatrics", qualification: "MD", experience_years: 10, consultation_fee: 500, available_days: "Mon, Tue, Thu, Fri" },
+      { id: 5, name: "Dr. Karthik Rao", department_id: 5, dept_name: "General Medicine", qualification: "MBBS, MD", experience_years: 14, consultation_fee: 450, available_days: "Mon - Sat" }
+    ];
+
+    function statusBadgeClass(status) {
+      if (status === "Confirmed") return "bg-emerald-100 text-emerald-800";
+      if (status === "Completed") return "bg-blue-100 text-blue-800";
+      if (status === "Cancelled") return "bg-rose-100 text-rose-800";
+      return "bg-amber-100 text-amber-800";
+    }
+
+    async function checkJavaBackend() {
+      const badge = document.getElementById("javaApiBadge");
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 1500);
+        const res = await fetch(`${JAVA_API_BASE}/health`, { signal: controller.signal });
+        clearTimeout(timer);
+        if (res.ok) {
+          javaApiOnline = true;
+          if (badge) {
+            badge.textContent = "Java API: Connected";
+            badge.className = "text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200";
+          }
+          return true;
+        }
+      } catch (_) {
+        javaApiOnline = false;
+      }
+      if (badge) {
+        badge.textContent = "Supabase Active (Java Offline)";
+        badge.className = "text-xs font-medium px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200";
+      }
+      return false;
+    }
+
+    async function loadCatalog() {
+      const { data: deptData } = await supabaseClient.from("departments").select("*").order("id");
+      const { data: docData } = await supabaseClient.from("doctors").select("*, departments(name)").order("id");
+
+      departments = (deptData && deptData.length) ? deptData : fallbackDepartments;
+      doctors = (docData && docData.length)
+        ? docData.map(d => ({ ...d, dept_name: d.departments?.name || "Specialty" }))
+        : fallbackDoctors;
+
+      renderDepartments();
+      renderDoctors();
+      populateDoctorSelect();
+    }
+
+    function renderDepartments() {
+      document.getElementById("departmentsGrid").innerHTML = departments.map(d => `
+        <div class="bg-white p-5 rounded-xl border border-slate-200 hover:border-teal-500 transition">
+          <h3 class="font-bold text-slate-900">${d.name}</h3>
+          <p class="text-xs text-slate-600 mt-1.5">${d.description || ""}</p>
+        </div>
+      `).join("");
+    }
+
+    function renderDoctors() {
+      const q = (document.getElementById("doctorSearch")?.value || "").toLowerCase();
+      const filtered = doctors.filter(doc =>
+        doc.name.toLowerCase().includes(q) || doc.dept_name.toLowerCase().includes(q)
+      );
+      document.getElementById("doctorsGrid").innerHTML = filtered.map(doc => `
+        <div class="bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-semibold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full">${doc.dept_name}</span>
+            <h3 class="font-bold text-lg text-slate-900 mt-2">${doc.name}</h3>
+            <p class="text-xs text-slate-500">${doc.qualification} • ${doc.experience_years} yrs exp</p>
+            <p class="text-xs text-slate-600 mt-2">Available: <strong>${doc.available_days}</strong></p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span class="font-bold text-slate-900">₹${doc.consultation_fee}</span>
+            <button onclick="selectDoctorAndBook(${doc.id})" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-teal-600 text-white hover:bg-teal-700">
+              Book Slot
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function populateDoctorSelect() {
+      const sel = document.getElementById("doctorSelect");
+      sel.innerHTML = doctors.map(d =>
+        `<option value="${d.id}" data-dept="${d.department_id}">${d.name} (${d.dept_name}) — ₹${d.consultation_fee}</option>`
+      ).join("");
+    }
+
+    function selectDoctorAndBook(docId) {
+      document.getElementById("doctorSelect").value = docId;
+      document.getElementById("portal").scrollIntoView({ behavior: "smooth" });
+      if (!currentUser) openAuthModal("login");
+    }
+
+    function openAuthModal(mode) {
+      switchAuthTab(mode);
+      document.getElementById("authError").textContent = "";
+      document.getElementById("authModal").classList.remove("hidden");
+      document.getElementById("authModal").classList.add("flex");
+    }
+
+    function closeAuthModal() {
+      document.getElementById("authModal").classList.add("hidden");
+      document.getElementById("authModal").classList.remove("flex");
+    }
+
+    function switchAuthTab(mode) {
+      authMode = mode;
+      const isSignup = mode === "signup";
+      document.getElementById("tabLogin").className = `flex-1 py-2 text-sm font-bold rounded-lg ${!isSignup ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-700"}`;
+      document.getElementById("tabSignup").className = `flex-1 py-2 text-sm font-bold rounded-lg ${isSignup ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-700"}`;
+      document.getElementById("fullNameField").classList.toggle("hidden", !isSignup);
+      document.getElementById("authSubmitBtn").textContent = isSignup ? "Create Account with Email" : "Login with Email";
+    }
+
+    async function signInWithGoogle() {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "https://syedshazia046-sketch.github.io/medicare-hospital/"
+        }
+      });
+      if (error) document.getElementById("authError").textContent = error.message;
+    }
+
+    async function handleEmailAuth(e) {
+      e.preventDefault();
+      document.getElementById("authError").textContent = "";
+      const email = document.getElementById("authEmail").value.trim();
+      const password = document.getElementById("authPassword").value;
+      const fullName = document.getElementById("authFullName").value.trim();
+
+      if (authMode === "signup") {
+        const { error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } }
+        });
+        if (error) return (document.getElementById("authError").textContent = error.message);
+        alert("Account created! You can now log in or check your email if confirmation is enabled.");
+        switchAuthTab("login");
+      } else {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) return (document.getElementById("authError").textContent = error.message);
+        closeAuthModal();
+      }
+    }
+
+    async function signOut() {
+      await supabaseClient.auth.signOut();
+    }
+
+    async function submitAppointment(e) {
+      e.preventDefault();
+      if (!currentUser) return openAuthModal("login");
+
+      const msgEl = document.getElementById("bookingMsg");
+      const docSelect = document.getElementById("doctorSelect");
+      const doctorId = Number(docSelect.value);
+      const departmentId = Number(docSelect.options[docSelect.selectedIndex].dataset.dept);
+      const bookingCode = "MC-" + Math.floor(100000 + Math.random() * 900000);
+
+      const payload = {
+        booking_code: bookingCode,
+        patient_id: currentUser.id,
+        patient_name: document.getElementById("patientName").value.trim(),
+        patient_phone: document.getElementById("patientPhone").value.trim(),
+        hospital_branch: document.getElementById("hospitalBranch").value,
+        doctor_id: doctorId,
+        department_id: departmentId,
+        appointment_date: document.getElementById("appointmentDate").value,
+        time_slot: document.getElementById("timeSlot").value,
+        symptoms: document.getElementById("symptoms").value.trim(),
+        status: "Pending"
+      };
+
+      if (javaApiOnline) {
+        try {
+          await fetch(`${JAVA_API_BASE}/appointments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              bookingCode: payload.booking_code,
+              patientId: payload.patient_id,
+              patientName: payload.patient_name,
+              patientPhone: payload.patient_phone,
+              hospitalBranch: payload.hospital_branch,
+              doctorId: payload.doctor_id,
+              departmentId: payload.department_id,
+              appointmentDate: payload.appointment_date,
+              timeSlot: payload.time_slot,
+              symptoms: payload.symptoms,
+              status: "Pending"
+            })
+          });
+        } catch (_) {}
+      }
+
+      const { error } = await supabaseClient.from("appointments").insert([payload]);
+      if (error) {
+        msgEl.className = "text-xs font-medium text-red-600";
+        msgEl.textContent = "Error sending appointment: " + error.message;
+        return;
+      }
+
+      msgEl.className = "text-xs font-medium text-teal-700";
+      msgEl.textContent = `Appointment sent to hospital! Booking ID: ${bookingCode}`;
+      document.getElementById("appointmentForm").reset();
+      document.getElementById("patientName").value = currentUser.user_metadata?.full_name || "";
+      await refreshAppointmentsViews();
+    }
+
+    async function updateAppointmentStatus(id, newStatus) {
+      if (javaApiOnline) {
+        try {
+          await fetch(`${JAVA_API_BASE}/appointments/${id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus })
+          });
+        } catch (_) {}
+      }
+
+      const { error } = await supabaseClient
+        .from("appointments")
+        .update({ status: newStatus })
+        .eq("id", id);
+
+      if (error) {
+        alert("Could not update status: " + error.message);
+        return;
+      }
+      await refreshAppointmentsViews();
+    }
+
+    async function refreshAppointmentsViews() {
+      if (!currentUser) return;
+
+      const myContainer = document.getElementById("appointmentsList");
+      const queueContainer = document.getElementById("hospitalQueueList");
+
+      const { data: myData, error: myError } = await supabaseClient
+        .from("appointments")
+        .select("*, doctors(name), departments(name)")
+        .eq("patient_id", currentUser.id)
+        .order("created_at", { ascending: false });
+
+      if (myError) {
+        myContainer.innerHTML = `<p class="text-sm text-red-600 bg-red-50 p-4 rounded-xl border border-red-200">Error: ${myError.message}</p>`;
+      } else if (!myData || !myData.length) {
+        myContainer.innerHTML = `<p class="text-sm text-slate-500 bg-slate-50 p-5 rounded-xl border border-slate-200">No appointments booked yet.</p>`;
+      } else {
+        myContainer.innerHTML = myData.map(a => `
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap justify-between items-center gap-3">
+            <div>
+              <div class="text-xs font-bold text-teal-700">${a.booking_code} • ${a.hospital_branch}</div>
+              <div class="font-bold text-slate-900">${a.doctors?.name || "Doctor"} (${a.departments?.name || "Department"})</div>
+              <div class="text-xs text-slate-600 mt-0.5">Date: <strong>${a.appointment_date}</strong> | Slot: <strong>${a.time_slot}</strong></div>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold ${statusBadgeClass(a.status)}">${a.status}</span>
+          </div>
+        `).join("");
+      }
+
+      const { data: allData, error: allError } = await supabaseClient
+        .from("appointments")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (allError) {
+        queueContainer.innerHTML = `<p class="text-red-600">Error loading hospital queue: ${allError.message}</p>`;
+        return;
+      }
+
+      if (!allData || !allData.length) {
+        queueContainer.innerHTML = `<p class="text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-200">No incoming appointments in the hospital queue yet.</p>`;
+        return;
+      }
+
+      queueContainer.innerHTML = allData.map(apt => `
+        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-bold text-slate-900">${apt.booking_code}</span>
+              <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusBadgeClass(apt.status)}">${apt.status}</span>
+              <span class="text-xs text-slate-500">• ${apt.hospital_branch}</span>
+            </div>
+            <p class="font-medium text-slate-800 mt-1">${apt.patient_name} (${apt.patient_phone})</p>
+            <p class="text-xs text-slate-600">Date: <strong>${apt.appointment_date}</strong> | Slot: <strong>${apt.time_slot}</strong>${apt.symptoms ? ` | Notes: ${apt.symptoms}` : ""}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="updateAppointmentStatus(${apt.id}, 'Confirmed')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Confirm</button>
+            <button onclick="updateAppointmentStatus(${apt.id}, 'Completed')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700">Complete</button>
+            <button onclick="updateAppointmentStatus(${apt.id}, 'Cancelled')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200">Cancel</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function updateSessionUI(session) {
+      currentUser = session?.user || null;
+      const authControls = document.getElementById("authControls");
+      const portalBtn = document.getElementById("portalAuthBtn");
+      const bookingArea = document.getElementById("bookingArea");
+      const statusText = document.getElementById("portalUserStatus");
+
+      if (currentUser) {
+        const displayName = currentUser.user_metadata?.full_name || currentUser.email;
+        authControls.innerHTML = `
+          <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Hi, ${displayName}</span>
+          <button onclick="signOut()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-200 text-slate-800 hover:bg-slate-300">Logout</button>
+        `;
+        portalBtn.classList.add("hidden");
+        bookingArea.classList.remove("hidden");
+        statusText.textContent = `Signed in as ${currentUser.email} — ready to send appointments to MediCare Hospital.`;
+        document.getElementById("patientName").value = currentUser.user_metadata?.full_name || "";
+        refreshAppointmentsViews();
+      } else {
+        authControls.innerHTML = `
+          <button onclick="openAuthModal('login')" class="px-4 py-2 text-sm font-semibold rounded-lg border border-teal-600 text-teal-700 hover:bg-teal-50 transition">Login</button>
+          <button onclick="openAuthModal('signup')" class="px-4 py-2 text-sm font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition">Sign Up</button>
+        `;
+        portalBtn.classList.remove("hidden");
+        bookingArea.classList.add("hidden");
+        statusText.textContent = "Sign in with Google or Email/Password to book and track your appointments.";
+      }
+    }
+
+    supabaseClient.auth.onAuthStateChange((_event, session) => updateSessionUI(session));
+
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      updateSessionUI(session);
+      await checkJavaBackend();
+      await loadCatalog();
+    })();
+  </script>
+</body>
+</html>
