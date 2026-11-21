@@ -564,28 +564,33 @@
       await refreshAppointmentsViews();
     }
 
-    async function updateAppointmentStatus(id, newStatus) {
-      if (javaApiOnline) {
-        try {
-          await fetch(`${JAVA_API_BASE}/appointments/${id}/status`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: newStatus })
-          });
-        } catch (_) {}
-      }
+async function updateAppointmentStatus(id, newStatus) {
+  if (javaApiOnline) {
+    try {
+      await fetch(`${JAVA_API_BASE}/appointments/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus })
+      });
+    } catch (_) {}
+  }
 
-      const { error } = await supabaseClient
-        .from("appointments")
-        .update({ status: newStatus })
-        .eq("id", id);
+  const { data, error } = await supabaseClient
+    .from("appointments")
+    .update({ status: newStatus })
+    .eq("id", id)
+    .select();
 
-      if (error) {
-        alert("Could not update status: " + error.message);
-        return;
-      }
-      await refreshAppointmentsViews();
-    }
+  if (error) {
+    alert("Could not update status: " + error.message);
+    return;
+  }
+  if (!data || data.length === 0) {
+    alert("Status update blocked by Supabase RLS policy. Please run the SQL UPDATE policy.");
+    return;
+  }
+  await refreshAppointmentsViews();
+}
 
     async function refreshAppointmentsViews() {
       if (!currentUser) return;
