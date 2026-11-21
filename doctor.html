@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediCare Doctor Portal | Clinical Desk & Appointments</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased">
+
+  <!-- Top Clinical Bar -->
+  <div class="bg-slate-900 text-slate-200 text-xs py-2 px-4">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <span><strong>MediCare Clinical Workstation</strong> • Authorized Doctor & Specialist Portal</span>
+      <div class="flex items-center gap-3">
+        <span id="javaApiBadge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-sky-300 border border-slate-700">Checking Backend...</span>
+        <a href="index.html" class="text-teal-300 hover:underline font-semibold">← Back to Patient Portal</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-teal-700 text-white flex items-center justify-center font-bold text-lg">MD</div>
+        <div>
+          <span class="font-bold text-xl tracking-tight text-slate-900">MediCare Doctor Desk</span>
+          <span class="block text-[11px] uppercase tracking-wider text-teal-700 font-semibold">Consultation & Specialty Services</span>
+        </div>
+      </div>
+
+      <div id="doctorAuthControls" class="flex items-center gap-3">
+        <button onclick="openAuthModal()" class="px-4 py-2 text-sm font-semibold rounded-lg bg-teal-700 text-white hover:bg-teal-800 transition">
+          Doctor Sign In
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- Login Prompt Banner -->
+    <div id="doctorLoginBanner" class="bg-white rounded-2xl border border-slate-200 p-8 text-center max-w-xl mx-auto mt-8 shadow-sm">
+      <span class="text-xs font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-3 py-1 rounded-full">Doctor Access</span>
+      <h1 class="text-2xl font-bold text-slate-900 mt-3">Sign In to Access Your Clinical Portal</h1>
+      <p class="text-sm text-slate-600 mt-2">
+        Manage your patient appointment requests, accept or complete consultations, and access diagnostic & clinical services tailored to your specialty.
+      </p>
+      <button onclick="openAuthModal()" class="mt-6 px-6 py-3 rounded-xl bg-teal-700 text-white font-semibold text-sm hover:bg-teal-800 transition">
+        Sign In with Google or Hospital Email
+      </button>
+    </div>
+
+    <!-- Authenticated Doctor Workspace -->
+    <div id="doctorWorkspace" class="hidden space-y-8">
+
+      <!-- Doctor Profile & Specialty Switcher -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span id="activeDeptBadge" class="text-xs font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full">Department</span>
+          <h1 id="activeDoctorTitle" class="text-2xl font-bold text-slate-900 mt-1.5">Doctor Workstation</h1>
+          <p id="activeDoctorMeta" class="text-sm text-slate-500">Select your specialist profile to load your assigned patient queue and department services.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Active Doctor Profile</label>
+            <select id="doctorProfileSelect" onchange="onDoctorProfileChange()" class="px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50 text-sm font-semibold text-slate-800"></select>
+          </div>
+          <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-2.5 rounded-xl mt-4 cursor-pointer">
+            <input id="showAllDeptsToggle" type="checkbox" onchange="loadDoctorQueue()" class="rounded text-teal-600" />
+            Show All Hospital Departments
+          </label>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-xl border border-slate-200">
+          <div class="text-xs font-semibold text-slate-500">Pending Approval</div>
+          <div id="statPending" class="text-2xl font-extrabold text-amber-600 mt-1">0</div>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200">
+          <div class="text-xs font-semibold text-slate-500">Accepted / Confirmed</div>
+          <div id="statConfirmed" class="text-2xl font-extrabold text-emerald-600 mt-1">0</div>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200">
+          <div class="text-xs font-semibold text-slate-500">Completed Visits</div>
+          <div id="statCompleted" class="text-2xl font-extrabold text-blue-600 mt-1">0</div>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200">
+          <div class="text-xs font-semibold text-slate-500">Specialty Services Active</div>
+          <div id="statServices" class="text-2xl font-extrabold text-teal-700 mt-1">0</div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-12 gap-8">
+        <!-- Left Column: Doctor Specialty Services & Clinical Tools -->
+        <div class="lg:col-span-4 space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <span class="text-xs font-bold uppercase tracking-wider text-teal-700">Department Clinical Access</span>
+            <h2 id="servicesHeading" class="text-lg font-bold text-slate-900 mt-1">Specialty Services & Lab Orders</h2>
+            <p class="text-xs text-slate-500 mt-1">Services available for your department to order or utilize during consultations.</p>
+
+            <div id="doctorServicesList" class="mt-4 space-y-2.5"></div>
+          </div>
+
+          <div class="bg-teal-900 text-white rounded-2xl p-6 shadow-sm">
+            <h3 class="font-bold text-base">Quick Clinical Tools</h3>
+            <p class="text-xs text-teal-200 mt-1">Standard hospital workflows available for doctors:</p>
+            <ul class="mt-3 space-y-2 text-xs text-teal-50">
+              <li>• <strong>1-Click Appointment Accept:</strong> Confirms slot & updates patient portal live.</li>
+              <li>• <strong>E-Prescription & Notes:</strong> Attach diagnosis & medicine advice to any booking.</li>
+              <li>• <strong>Diagnostic Requisition:</strong> Route patient to Lab, Radiology, or Specialty Wing.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Right Column: Patient Appointment Requests for This Doctor -->
+        <div class="lg:col-span-8">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div class="flex flex-wrap justify-between items-center gap-3 pb-4 border-b border-slate-200">
+              <div>
+                <h2 class="text-lg font-bold text-slate-900">Patient Appointment Requests</h2>
+                <p class="text-xs text-slate-500">Review symptoms, accept consultations, order department services, and record notes.</p>
+              </div>
+              <button onclick="loadDoctorQueue()" class="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">
+                Refresh Queue
+              </button>
+            </div>
+
+            <div id="doctorAppointmentsList" class="mt-5 space-y-4"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Clinical Notes & Service Order Modal -->
+  <div id="clinicalModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
+      <button onclick="closeClinicalModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold">×</button>
+      <span class="text-xs font-bold uppercase text-teal-700">Consultation & Service Requisition</span>
+      <h3 id="modalPatientTitle" class="text-lg font-bold text-slate-900 mt-1">Patient Consultation</h3>
+      <p id="modalBookingCode" class="text-xs text-slate-500 mb-4"></p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Order Specialty Services / Diagnostics</label>
+          <div id="modalServiceCheckboxes" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Doctor Diagnosis / Prescription Notes</label>
+          <textarea id="modalDoctorNotes" rows="3" placeholder="Enter clinical observations, prescribed medications, or follow-up instructions..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-2 pt-2">
+          <button onclick="saveClinicalDetails('Confirmed')" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">
+            Save & Accept Appointment
+          </button>
+          <button onclick="saveClinicalDetails('Completed')" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700">
+            Save & Mark Completed
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold">×</button>
+      <h3 class="text-lg font-bold text-slate-900 mb-1">Doctor Portal Sign In</h3>
+      <p class="text-xs text-slate-500 mb-4">Sign in with your hospital Google account or email/password.</p>
+
+      <button onclick="signInWithGoogle()" class="w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 font-semibold text-sm text-slate-800 flex items-center justify-center gap-2 transition">
+        Continue with Google
+      </button>
+
+      <div class="relative my-4 text-center">
+        <span class="bg-white px-2 text-xs text-slate-400 uppercase relative z-10">or email</span>
+        <div class="border-t border-slate-200 absolute inset-x-0 top-1/2"></div>
+      </div>
+
+      <form onsubmit="handleEmailLogin(event)" class="space-y-3">
+        <input id="docEmail" type="email" required placeholder="doctor@medicare.com" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm" />
+        <input id="docPassword" type="password" required placeholder="Password" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm" />
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-teal-700 text-white font-semibold text-sm hover:bg-teal-800">
+          Sign In to Doctor Desk
+        </button>
+      </form>
+      <p id="docAuthError" class="text-xs text-red-600 mt-2 font-medium"></p>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://bhltltxzqeuibvlvfmer.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_MRW2MNBJaU_uLD90oQa4QQ_1Hu8Xq8f";
+    const JAVA_API_BASE = "http://localhost:8080/api";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = null;
+    let javaApiOnline = false;
+    let doctors = [];
+    let selectedAppointmentId = null;
+
+    // Specialty-specific services & clinical tools per department
+    const specialtyServicesMap = {
+      "Cardiology": [
+        { name: "12-Lead Digital ECG", code: "CARD-101", turnAround: "15 mins" },
+        { name: "2D Echocardiography & Doppler", code: "CARD-102", turnAround: "30 mins" },
+        { name: "Treadmill Stress Test (TMT)", code: "CARD-103", turnAround: "45 mins" },
+        { name: "24-Hr Holter Monitoring", code: "CARD-104", turnAround: "Next Day" },
+        { name: "Cardiac Biomarker Panel (Troponin)", code: "LAB-201", turnAround: "1 hr" }
+      ],
+      "Neurology": [
+        { name: "Digital EEG (Brain Wave Study)", code: "NEUR-101", turnAround: "40 mins" },
+        { name: "MRI Brain & Spine Protocol", code: "RAD-301", turnAround: "2 hrs" },
+        { name: "Nerve Conduction Velocity (NCV)", code: "NEUR-102", turnAround: "45 mins" },
+        { name: "Electromyography (EMG)", code: "NEUR-103", turnAround: "45 mins" },
+        { name: "Stroke Triage & Neuro Rehab", code: "NEUR-104", turnAround: "Immediate" }
+      ],
+      "Orthopedics": [
+        { name: "Digital X-Ray (Bone & Joint)", code: "ORTH-101", turnAround: "20 mins" },
+        { name: "DEXA Bone Mineral Density Scan", code: "ORTH-102", turnAround: "30 mins" },
+        { name: "Physiotherapy & Gait Rehab", code: "ORTH-103", turnAround: "Session" },
+        { name: "Plaster Cast & Splint Unit", code: "ORTH-104", turnAround: "30 mins" },
+        { name: "Joint Arthroscopy Workup", code: "ORTH-105", turnAround: "Same Day" }
+      ],
+      "Pediatrics": [
+        { name: "Child Immunization & Vaccine Registry", code: "PED-101", turnAround: "15 mins" },
+        { name: "Pediatric Growth & Nutrition Chart", code: "PED-102", turnAround: "15 mins" },
+        { name: "Nebulization & Respiratory Care", code: "PED-103", turnAround: "20 mins" },
+        { name: "Neonatal Bilirubin & CBC Panel", code: "LAB-105", turnAround: "45 mins" }
+      ],
+      "General Medicine": [
+        { name: "Complete Blood Count (CBC) & ESR", code: "LAB-101", turnAround: "45 mins" },
+        { name: "Fever & Infection Profile (Dengue/Typhoid)", code: "LAB-102", turnAround: "1 hr" },
+        { name: "HbA1c & Fasting Blood Glucose", code: "LAB-103", turnAround: "45 mins" },
+        { name: "Chest X-Ray & Pulse Oximetry", code: "RAD-101", turnAround: "20 mins" },
+        { name: "IV Hydration & Day-Care Observation", code: "OPD-101", turnAround: "Immediate" }
+      ]
+    };
+
+    const fallbackDoctors = [
+      { id: 1, name: "Dr. Arvind Sharma", department_id: 1, dept_name: "Cardiology", qualification: "MD, DM", experience_years: 15 },
+      { id: 2, name: "Dr. Priya Nair", department_id: 2, dept_name: "Neurology", qualification: "MD, DM", experience_years: 12 },
+      { id: 3, name: "Dr. Rajesh Verma", department_id: 3, dept_name: "Orthopedics", qualification: "MS", experience_years: 18 },
+      { id: 4, name: "Dr. Sneha Reddy", department_id: 4, dept_name: "Pediatrics", qualification: "MD", experience_years: 10 },
+      { id: 5, name: "Dr. Karthik Rao", department_id: 5, dept_name: "General Medicine", qualification: "MBBS, MD", experience_years: 14 }
+    ];
+
+    function statusBadgeClass(status) {
+      if (status === "Confirmed") return "bg-emerald-100 text-emerald-800";
+      if (status === "Completed") return "bg-blue-100 text-blue-800";
+      if (status === "Cancelled") return "bg-rose-100 text-rose-800";
+      return "bg-amber-100 text-amber-800";
+    }
+
+    async function checkJavaBackend() {
+      const badge = document.getElementById("javaApiBadge");
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 1500);
+        const res = await fetch(`${JAVA_API_BASE}/health`, { signal: controller.signal });
+        clearTimeout(timer);
+        if (res.ok) {
+          javaApiOnline = true;
+          badge.textContent = "Java API: Connected";
+          badge.className = "px-2.5 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-700";
+          return;
+        }
+      } catch (_) {}
+      javaApiOnline = false;
+      badge.textContent = "Supabase Cloud Active";
+    }
+
+    async function loadDoctorsList() {
+      const { data } = await supabaseClient.from("doctors").select("*, departments(name)").order("id");
+      doctors = (data && data.length)
+        ? data.map(d => ({ ...d, dept_name: d.departments?.name || "General Medicine" }))
+        : fallbackDoctors;
+
+      const select = document.getElementById("doctorProfileSelect");
+      select.innerHTML = doctors.map(d =>
+        `<option value="${d.id}">${d.name} — ${d.dept_name}</option>`
+      ).join("");
+      onDoctorProfileChange();
+    }
+
+    function getSelectedDoctor() {
+      const id = Number(document.getElementById("doctorProfileSelect").value);
+      return doctors.find(d => Number(d.id) === id) || doctors[0];
+    }
+
+    function onDoctorProfileChange() {
+      const doc = getSelectedDoctor();
+      if (!doc) return;
+
+      document.getElementById("activeDeptBadge").textContent = `${doc.dept_name} Department`;
+      document.getElementById("activeDoctorTitle").textContent = `${doc.name} (${doc.qualification})`;
+      document.getElementById("activeDoctorMeta").textContent = `${doc.experience_years} Years Experience • Viewing consultations & ${doc.dept_name} clinical services`;
+      document.getElementById("servicesHeading").textContent = `${doc.dept_name} Services & Diagnostics`;
+
+      const services = specialtyServicesMap[doc.dept_name] || specialtyServicesMap["General Medicine"];
+      document.getElementById("statServices").textContent = services.length;
+
+      document.getElementById("doctorServicesList").innerHTML = services.map(s => `
+        <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-bold text-xs text-slate-900">${s.name}</div>
+            <div class="text-[11px] text-slate-500">Code: ${s.code} • Turnaround: ${s.turnAround}</div>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800">Available</span>
+        </div>
+      `).join("");
+
+      loadDoctorQueue();
+    }
+
+    async function loadDoctorQueue() {
+      if (!currentUser) return;
+      const doc = getSelectedDoctor();
+      const showAll = document.getElementById("showAllDeptsToggle").checked;
+
+      let query = supabaseClient.from("appointments").select("*").order("created_at", { ascending: false });
+      if (!showAll && doc) {
+        query = query.eq("doctor_id", doc.id);
+      }
+
+      const { data, error } = await query;
+      const container = document.getElementById("doctorAppointmentsList");
+
+      if (error) {
+        container.innerHTML = `<p class="text-sm text-red-600 bg-red-50 p-4 rounded-xl border border-red-200">Error: ${error.message}</p>`;
+        return;
+      }
+
+      const list = data || [];
+      document.getElementById("statPending").textContent = list.filter(a => a.status === "Pending").length;
+      document.getElementById("statConfirmed").textContent = list.filter(a => a.status === "Confirmed").length;
+      document.getElementById("statCompleted").textContent = list.filter(a => a.status === "Completed").length;
+
+      if (!list.length) {
+        container.innerHTML = `<p class="text-sm text-slate-500 bg-slate-50 p-6 rounded-xl border border-slate-200">No appointments assigned to ${doc.name} right now. Toggle "Show All Hospital Departments" above to view all hospital bookings.</p>`;
+        return;
+      }
+
+      container.innerHTML = list.map(apt => {
+        const assignedDoc = doctors.find(d => Number(d.id) === Number(apt.doctor_id));
+        return `
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+            <div class="flex flex-wrap justify-between items-start gap-3">
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-bold text-slate-900">${apt.booking_code}</span>
+                  <span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${statusBadgeClass(apt.status)}">${apt.status}</span>
+                  <span class="text-xs text-slate-500">• ${apt.hospital_branch}</span>
+                </div>
+                <div class="font-bold text-base text-slate-900 mt-1">${apt.patient_name} <span class="text-xs font-normal text-slate-500">(${apt.patient_phone})</span></div>
+                <div class="text-xs text-slate-600 mt-0.5">
+                  Doctor: <strong>${assignedDoc?.name || "Specialist"}</strong> | Date: <strong>${apt.appointment_date}</strong> | Slot: <strong>${apt.time_slot}</strong>
+                </div>
+                ${apt.symptoms ? `<p class="text-xs text-slate-700 mt-1.5 bg-white p-2 rounded-lg border border-slate-200"><strong>Reported Symptoms:</strong> ${apt.symptoms}</p>` : ""}
+                ${apt.ordered_services ? `<p class="text-xs text-teal-800 mt-1.5 bg-teal-50 p-2 rounded-lg border border-teal-200"><strong>Ordered Services:</strong> ${apt.ordered_services}</p>` : ""}
+                ${apt.doctor_notes ? `<p class="text-xs text-slate-800 mt-1.5 bg-blue-50 p-2 rounded-lg border border-blue-200"><strong>Doctor Notes:</strong> ${apt.doctor_notes}</p>` : ""}
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="updateStatus(${apt.id}, 'Confirmed')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">
+                  Accept
+                </button>
+                <button onclick='openClinicalModal(${JSON.stringify(apt).replace(/'/g, "'")})' class="px-3 py-1.5 rounded-lg bg-teal-700 text-white text-xs font-bold hover:bg-teal-800">
+                  Consult & Order Services
+                </button>
+                <button onclick="updateStatus(${apt.id}, 'Completed')" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700">
+                  Complete
+                </button>
+                <button onclick="updateStatus(${apt.id}, 'Cancelled')" class="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-700 text-xs font-bold hover:bg-rose-200">
+                  Decline
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function updateStatus(id, newStatus, extraFields = {}) {
+      if (javaApiOnline) {
+        try {
+          await fetch(`${JAVA_API_BASE}/appointments/${id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus })
+          });
+        } catch (_) {}
+      }
+
+      const { error } = await supabaseClient
+        .from("appointments")
+        .update({ status: newStatus, ...extraFields })
+        .eq("id", id);
+
+      if (error) {
+        alert("Update failed: " + error.message);
+        return;
+      }
+      await loadDoctorQueue();
+    }
+
+    function openClinicalModal(apt) {
+      selectedAppointmentId = apt.id;
+      const doc = doctors.find(d => Number(d.id) === Number(apt.doctor_id)) || getSelectedDoctor();
+      const services = specialtyServicesMap[doc.dept_name] || specialtyServicesMap["General Medicine"];
+      const existingServices = (apt.ordered_services || "").split(", ").filter(Boolean);
+
+      document.getElementById("modalPatientTitle").textContent = `Patient: ${apt.patient_name}`;
+      document.getElementById("modalBookingCode").textContent = `${apt.booking_code} • ${doc.dept_name} (${apt.appointment_date} at ${apt.time_slot})`;
+      document.getElementById("modalDoctorNotes").value = apt.doctor_notes || "";
+
+      document.getElementById("modalServiceCheckboxes").innerHTML = services.map(s => `
+        <label class="flex items-center gap-2 p-1.5 rounded hover:bg-white cursor-pointer">
+          <input type="checkbox" value="${s.name}" ${existingServices.includes(s.name) ? "checked" : ""} class="service-checkbox rounded text-teal-600" />
+          <span>${s.name}</span>
+        </label>
+      `).join("");
+
+      document.getElementById("clinicalModal").classList.remove("hidden");
+      document.getElementById("clinicalModal").classList.add("flex");
+    }
+
+    function closeClinicalModal() {
+      document.getElementById("clinicalModal").classList.add("hidden");
+      document.getElementById("clinicalModal").classList.remove("flex");
+    }
+
+    async function saveClinicalDetails(newStatus) {
+      if (!selectedAppointmentId) return;
+      const checkedServices = Array.from(document.querySelectorAll(".service-checkbox:checked")).map(cb => cb.value);
+      const notes = document.getElementById("modalDoctorNotes").value.trim();
+
+      await updateStatus(selectedAppointmentId, newStatus, {
+        ordered_services: checkedServices.join(", "),
+        doctor_notes: notes
+      });
+      closeClinicalModal();
+    }
+
+    function openAuthModal() {
+      document.getElementById("authModal").classList.remove("hidden");
+      document.getElementById("authModal").classList.add("flex");
+    }
+
+    function closeAuthModal() {
+      document.getElementById("authModal").classList.add("hidden");
+      document.getElementById("authModal").classList.remove("flex");
+    }
+
+    async function signInWithGoogle() {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.href }
+      });
+      if (error) document.getElementById("docAuthError").textContent = error.message;
+    }
+
+    async function handleEmailLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("docEmail").value.trim();
+      const password = document.getElementById("docPassword").value;
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        document.getElementById("docAuthError").textContent = error.message;
+        return;
+      }
+      closeAuthModal();
+    }
+
+    async function signOut() {
+      await supabaseClient.auth.signOut();
+    }
+
+    function updateSessionUI(session) {
+      currentUser = session?.user || null;
+      const controls = document.getElementById("doctorAuthControls");
+      const banner = document.getElementById("doctorLoginBanner");
+      const workspace = document.getElementById("doctorWorkspace");
+
+      if (currentUser) {
+        controls.innerHTML = `
+          <span class="text-xs font-semibold text-slate-600 hidden sm:inline">${currentUser.email}</span>
+          <button onclick="signOut()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-200 text-slate-800 hover:bg-slate-300">Logout</button>
+        `;
+        banner.classList.add("hidden");
+        workspace.classList.remove("hidden");
+        loadDoctorsList();
+      } else {
+        controls.innerHTML = `
+          <button onclick="openAuthModal()" class="px-4 py-2 text-sm font-semibold rounded-lg bg-teal-700 text-white hover:bg-teal-800">Doctor Sign In</button>
+        `;
+        banner.classList.remove("hidden");
+        workspace.classList.add("hidden");
+      }
+    }
+
+    supabaseClient.auth.onAuthStateChange((_event, session) => updateSessionUI(session));
+
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      updateSessionUI(session);
+      await checkJavaBackend();
+    })();
+  </script>
+</body>
+</html>
