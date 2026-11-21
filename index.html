@@ -564,33 +564,33 @@
       await refreshAppointmentsViews();
     }
 
-async function updateAppointmentStatus(id, newStatus) {
-  if (javaApiOnline) {
-    try {
-      await fetch(`${JAVA_API_BASE}/appointments/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
-      });
-    } catch (_) {}
-  }
+    async function updateAppointmentStatus(id, newStatus) {
+      if (javaApiOnline) {
+        try {
+          await fetch(`${JAVA_API_BASE}/appointments/${id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus })
+          });
+        } catch (_) {}
+      }
 
-  const { data, error } = await supabaseClient
-    .from("appointments")
-    .update({ status: newStatus })
-    .eq("id", id)
-    .select();
+      const { data, error } = await supabaseClient
+        .from("appointments")
+        .update({ status: newStatus })
+        .eq("id", id)
+        .select();
 
-  if (error) {
-    alert("Could not update status: " + error.message);
-    return;
-  }
-  if (!data || data.length === 0) {
-    alert("Status update blocked by Supabase RLS policy. Please run the SQL UPDATE policy.");
-    return;
-  }
-  await refreshAppointmentsViews();
-}
+      if (error) {
+        alert("Could not update status: " + error.message);
+        return;
+      }
+      if (!data || data.length === 0) {
+        alert("Status update blocked by Supabase RLS policy. Please run the SQL UPDATE policy.");
+        return;
+      }
+      await refreshAppointmentsViews();
+    }
 
     async function refreshAppointmentsViews() {
       if (!currentUser) return;
@@ -600,7 +600,7 @@ async function updateAppointmentStatus(id, newStatus) {
 
       const { data: myData, error: myError } = await supabaseClient
         .from("appointments")
-        .select("*, doctors(name), departments(name)")
+        .select("*")
         .eq("patient_id", currentUser.id)
         .order("created_at", { ascending: false });
 
@@ -609,16 +609,20 @@ async function updateAppointmentStatus(id, newStatus) {
       } else if (!myData || !myData.length) {
         myContainer.innerHTML = `<p class="text-sm text-slate-500 bg-slate-50 p-5 rounded-xl border border-slate-200">No appointments booked yet.</p>`;
       } else {
-        myContainer.innerHTML = myData.map(a => `
-          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap justify-between items-center gap-3">
-            <div>
-              <div class="text-xs font-bold text-teal-700">${a.booking_code} • ${a.hospital_branch}</div>
-              <div class="font-bold text-slate-900">${a.doctors?.name || "Doctor"} (${a.departments?.name || "Department"})</div>
-              <div class="text-xs text-slate-600 mt-0.5">Date: <strong>${a.appointment_date}</strong> | Slot: <strong>${a.time_slot}</strong></div>
+        myContainer.innerHTML = myData.map(a => {
+          const doc = doctors.find(d => Number(d.id) === Number(a.doctor_id));
+          const dept = departments.find(d => Number(d.id) === Number(a.department_id));
+          return `
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap justify-between items-center gap-3">
+              <div>
+                <div class="text-xs font-bold text-teal-700">${a.booking_code} • ${a.hospital_branch}</div>
+                <div class="font-bold text-slate-900">${doc?.name || "Specialist Doctor"} (${dept?.name || doc?.dept_name || "Department"})</div>
+                <div class="text-xs text-slate-600 mt-0.5">Date: <strong>${a.appointment_date}</strong> | Slot: <strong>${a.time_slot}</strong></div>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold ${statusBadgeClass(a.status)}">${a.status}</span>
             </div>
-            <span class="px-3 py-1 rounded-full text-xs font-bold ${statusBadgeClass(a.status)}">${a.status}</span>
-          </div>
-        `).join("");
+          `;
+        }).join("");
       }
 
       const { data: allData, error: allError } = await supabaseClient
