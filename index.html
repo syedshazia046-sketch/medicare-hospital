@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MediCare Multi-Specialty Hospital | Appointment & Patient Portal</title>
+  <title>MediCare Multi-Specialty Hospital | Patient Appointment Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -34,8 +34,8 @@
         <a href="#doctors" class="hover:text-teal-600 transition">Find a Doctor</a>
         <a href="#process" class="hover:text-teal-600 transition">Appointment Process</a>
         <a href="#services" class="hover:text-teal-600 transition">Services</a>
-        <a href="#portal" onclick="setActiveRoleView('patient')" class="hover:text-teal-600 transition">Patient Portal</a>
-        <a href="#portal" onclick="setActiveRoleView('doctor')" class="hover:text-teal-600 transition">Doctor Desk</a>
+        <a href="#portal" class="hover:text-teal-600 transition">My Appointments</a>
+        <a href="doctor.html" class="text-teal-700 font-semibold hover:text-teal-900 transition">Doctor Page →</a>
       </nav>
 
       <div id="authControls" class="flex items-center gap-3">
@@ -54,7 +54,7 @@
     <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10 items-center">
       <div>
         <span class="inline-block px-3 py-1 rounded-full bg-teal-700/60 border border-teal-500/40 text-teal-100 text-xs font-semibold mb-4">
-          Digital Patient & Hospital Appointment System
+          Digital Patient Appointment System
         </span>
         <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight mb-4">
           Trusted Specialists. Instant Hospital Appointments.
@@ -63,11 +63,11 @@
           Book verified doctor consultations directly routed to our hospital departments, track real-time approval status, and manage your visit history in one place.
         </p>
         <div class="flex flex-wrap gap-3">
-          <a href="#portal" onclick="setActiveRoleView('patient')" class="px-6 py-3 rounded-xl bg-white text-teal-900 font-bold text-sm hover:bg-teal-50 transition">
+          <a href="#portal" class="px-6 py-3 rounded-xl bg-white text-teal-900 font-bold text-sm hover:bg-teal-50 transition">
             Book an Appointment
           </a>
-          <a href="#portal" onclick="setActiveRoleView('doctor')" class="px-6 py-3 rounded-xl bg-teal-700/70 border border-teal-400/40 text-white font-semibold text-sm hover:bg-teal-700 transition">
-            Open Doctor Desk
+          <a href="#process" class="px-6 py-3 rounded-xl bg-teal-700/70 border border-teal-400/40 text-white font-semibold text-sm hover:bg-teal-700 transition">
+            How Appointments Work
           </a>
         </div>
       </div>
@@ -97,8 +97,8 @@
   <section id="process" class="py-16 px-4 max-w-7xl mx-auto">
     <div class="text-center max-w-2xl mx-auto mb-12">
       <span class="text-xs font-bold uppercase tracking-wider text-teal-700">Appointment Process</span>
-      <h2 class="text-3xl font-bold text-slate-900 mt-1">How Your Appointment Reaches the Hospital</h2>
-      <p class="text-slate-600 mt-2 text-sm">Every booking follows a transparent four-step workflow from patient request to hospital confirmation.</p>
+      <h2 class="text-3xl font-bold text-slate-900 mt-1">How Your Appointment Reaches the Doctor</h2>
+      <p class="text-slate-600 mt-2 text-sm">Every booking follows a transparent four-step workflow from patient request to doctor confirmation.</p>
     </div>
 
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -109,18 +109,18 @@
       </div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-800 font-bold flex items-center justify-center mb-4">2</div>
-        <h3 class="font-bold text-slate-900 mb-1">Routed to Doctor Desk</h3>
-        <p class="text-sm text-slate-600">Your request is stored in Supabase and routed to the Doctor Desk queue.</p>
+        <h3 class="font-bold text-slate-900 mb-1">Sent to Doctor Queue</h3>
+        <p class="text-sm text-slate-600">Your request is saved in Supabase and sent directly to the doctor's appointment dashboard.</p>
       </div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-800 font-bold flex items-center justify-center mb-4">3</div>
-        <h3 class="font-bold text-slate-900 mb-1">Doctor / Desk Review</h3>
-        <p class="text-sm text-slate-600">The Doctor Desk reviews incoming bookings and updates status to <em>Confirmed</em>, <em>Completed</em>, or <em>Cancelled</em>.</p>
+        <h3 class="font-bold text-slate-900 mb-1">Doctor Confirmation</h3>
+        <p class="text-sm text-slate-600">The doctor reviews your request and updates your status from <em>Pending</em> to <em>Confirmed</em>.</p>
       </div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-800 font-bold flex items-center justify-center mb-4">4</div>
         <h3 class="font-bold text-slate-900 mb-1">Visit & Consultation</h3>
-        <p class="text-sm text-slate-600">Arrive 15 minutes early with your Booking ID for smooth OPD check-in and doctor consultation.</p>
+        <p class="text-sm text-slate-600">Arrive 15 minutes early with your Booking ID for smooth OPD check-in and consultation.</p>
       </div>
     </div>
   </section>
@@ -163,113 +163,83 @@
     </div>
   </section>
 
-  <!-- Patient Booking & Doctor Desk Portal -->
+  <!-- Patient Booking & Status Section (Patients Only) -->
   <section id="portal" class="py-16 px-4 max-w-7xl mx-auto">
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
       <div class="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-slate-200">
         <div>
-          <h2 class="text-2xl font-bold text-slate-900">Patient Portal & Doctor Desk</h2>
-          <p id="portalUserStatus" class="text-sm text-slate-600 mt-1">Sign in with Google or Email/Password to book or manage appointments.</p>
+          <h2 class="text-2xl font-bold text-slate-900">Book & Track Your Appointments</h2>
+          <p id="portalUserStatus" class="text-sm text-slate-600 mt-1">Sign in with Google or Email/Password to book and track your appointments.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-3">
-          <span id="javaApiBadge" class="text-xs font-medium px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-            Java API: Checking...
-          </span>
-          <button id="portalAuthBtn" onclick="openAuthModal('login')" class="px-5 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition">
-            Login / Create Account
-          </button>
-        </div>
+        <button id="portalAuthBtn" onclick="openAuthModal('login')" class="px-5 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition">
+          Login / Create Account
+        </button>
       </div>
 
-      <div id="bookingArea" class="hidden mt-6 space-y-8">
-        <!-- Role View Switcher (Patient Page vs Doctor Page) -->
-        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-100 p-2 rounded-xl border border-slate-200">
-          <div class="flex gap-2">
-            <button id="btnPatientView" onclick="setActiveRoleView('patient')" class="px-4 py-2 rounded-lg text-sm font-bold bg-teal-600 text-white transition">
-              Patient Page (Book & Track)
-            </button>
-            <button id="btnDoctorView" onclick="setActiveRoleView('doctor')" class="px-4 py-2 rounded-lg text-sm font-bold bg-white text-slate-700 hover:bg-slate-50 transition">
-              Doctor Page (Incoming Queue)
-            </button>
+      <div id="bookingArea" class="hidden mt-8 grid lg:grid-cols-12 gap-8">
+        <!-- Appointment Form -->
+        <form id="appointmentForm" onsubmit="submitAppointment(event)" class="lg:col-span-5 space-y-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
+          <h3 class="font-bold text-lg text-slate-900">New Appointment Request</h3>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Patient Full Name *</label>
+            <input id="patientName" type="text" required class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
           </div>
-          <button onclick="refreshAppointmentsViews()" class="text-xs font-semibold px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition">
-            Refresh Data
-          </button>
-        </div>
 
-        <!-- PATIENT VIEW ONLY: Booking Form + Patient's Own Appointments -->
-        <div id="patientViewPanel" class="grid lg:grid-cols-12 gap-8">
-          <form id="appointmentForm" onsubmit="submitAppointment(event)" class="lg:col-span-5 space-y-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
-            <h3 class="font-bold text-lg text-slate-900">New Appointment Request</h3>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Phone Number *</label>
+            <input id="patientPhone" type="tel" required placeholder="+91 98765 43210" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+          </div>
 
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Hospital Branch *</label>
+            <select id="hospitalBranch" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white">
+              <option value="MediCare Main Campus - Vijayawada">MediCare Main Campus - Vijayawada</option>
+              <option value="MediCare Specialty Wing - Amaravati">MediCare Specialty Wing - Amaravati</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Department & Doctor *</label>
+            <select id="doctorSelect" required class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white"></select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Patient Full Name *</label>
-              <input id="patientName" type="text" required class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Date *</label>
+              <input id="appointmentDate" type="date" required class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
             </div>
-
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Phone Number *</label>
-              <input id="patientPhone" type="tel" required placeholder="+91 98765 43210" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Hospital Branch *</label>
-              <select id="hospitalBranch" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white">
-                <option value="MediCare Main Campus - Vijayawada">MediCare Main Campus - Vijayawada</option>
-                <option value="MediCare Specialty Wing - Amaravati">MediCare Specialty Wing - Amaravati</option>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Time Slot *</label>
+              <select id="timeSlot" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white">
+                <option>09:30 AM - 10:00 AM</option>
+                <option>11:00 AM - 11:30 AM</option>
+                <option>02:30 PM - 03:00 PM</option>
+                <option>05:00 PM - 05:30 PM</option>
               </select>
             </div>
+          </div>
 
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Department & Doctor *</label>
-              <select id="doctorSelect" required class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white"></select>
-            </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Symptoms / Reason for Visit</label>
+            <textarea id="symptoms" rows="2" placeholder="Briefly describe symptoms..." class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white"></textarea>
+          </div>
 
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Date *</label>
-                <input id="appointmentDate" type="date" required class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Time Slot *</label>
-                <select id="timeSlot" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white">
-                  <option>09:30 AM - 10:00 AM</option>
-                  <option>11:00 AM - 11:30 AM</option>
-                  <option>02:30 PM - 03:00 PM</option>
-                  <option>05:00 PM - 05:30 PM</option>
-                </select>
-              </div>
-            </div>
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-teal-600 text-white font-semibold text-sm hover:bg-teal-700 transition">
+            Send Appointment to Doctor
+          </button>
+          <p id="bookingMsg" class="text-xs font-medium text-teal-700"></p>
+        </form>
 
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Symptoms / Reason for Visit</label>
-              <textarea id="symptoms" rows="2" placeholder="Briefly describe symptoms..." class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm bg-white"></textarea>
-            </div>
-
-            <button type="submit" class="w-full py-2.5 rounded-xl bg-teal-600 text-white font-semibold text-sm hover:bg-teal-700 transition">
-              Send Appointment to Doctor
+        <!-- My Sent Appointments List (Status Badge Only) -->
+        <div class="lg:col-span-7">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-lg text-slate-900">Your Sent Appointments</h3>
+            <button onclick="loadMyAppointments()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+              Refresh Status
             </button>
-            <p id="bookingMsg" class="text-xs font-medium text-teal-700"></p>
-          </form>
-
-          <div class="lg:col-span-7">
-            <h3 class="font-bold text-lg text-slate-900 mb-4">My Sent Appointments</h3>
-            <div id="appointmentsList" class="space-y-3"></div>
           </div>
-        </div>
-
-        <!-- DOCTOR PAGE ONLY: Incoming Patient Appointments & Action Controls -->
-        <div id="doctorViewPanel" class="hidden">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div>
-              <span class="text-xs font-semibold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full">Doctor Desk</span>
-              <h3 class="text-xl font-bold text-slate-900 mt-1">Incoming Appointments Sent by Patients</h3>
-              <p class="text-sm text-slate-500">Review patient requests and update status to Confirm, Complete, or Cancel.</p>
-            </div>
-          </div>
-          <div id="hospitalQueueList" class="space-y-3 text-sm text-slate-600">
-            Loading doctor queue...
-          </div>
+          <div id="appointmentsList" class="space-y-3"></div>
         </div>
       </div>
     </div>
@@ -281,8 +251,9 @@
       <div>
         <strong class="text-white">MediCare Hospital & Care Network</strong> — Digital Patient Appointment System
       </div>
-      <div class="text-xs text-slate-400">
-        Hosted on GitHub Pages • Powered by Supabase & Java Spring Boot
+      <div class="flex items-center gap-4 text-xs text-slate-400">
+        <a href="doctor.html" class="text-teal-400 hover:underline font-semibold">Doctor Dashboard</a>
+        <span>• Hosted on GitHub Pages • Powered by Supabase</span>
       </div>
     </div>
   </footer>
@@ -297,7 +268,6 @@
         <button id="tabSignup" onclick="switchAuthTab('signup')" class="flex-1 py-2 text-sm font-bold rounded-lg bg-slate-100 text-slate-700">Create Account</button>
       </div>
 
-      <!-- Google Login / Sign Up -->
       <button onclick="signInWithGoogle()" class="w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 font-semibold text-sm text-slate-800 flex items-center justify-center gap-2.5 transition">
         <svg class="w-4 h-4" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.54-1.14 2.85-2.4 3.72v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.21z"/>
@@ -313,7 +283,6 @@
         <div class="border-t border-slate-200 absolute inset-x-0 top-1/2"></div>
       </div>
 
-      <!-- Email + Password Form -->
       <form id="emailAuthForm" onsubmit="handleEmailAuth(event)" class="space-y-3.5">
         <div id="fullNameField" class="hidden">
           <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
@@ -342,13 +311,10 @@
   <script>
     const SUPABASE_URL = "https://bhltltxzqeuibvlvfmer.supabase.co";
     const SUPABASE_KEY = "sb_publishable_MRW2MNBJaU_uLD90oQa4QQ_1Hu8Xq8f";
-    const JAVA_API_BASE = "http://localhost:8080/api";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let authMode = "login";
     let currentUser = null;
-    let activeRoleView = "patient";
-    let javaApiOnline = false;
     let departments = [];
     let doctors = [];
 
@@ -368,59 +334,11 @@
       { id: 5, name: "Dr. Karthik Rao", department_id: 5, dept_name: "General Medicine", qualification: "MBBS, MD", experience_years: 14, consultation_fee: 450, available_days: "Mon - Sat" }
     ];
 
-    function setActiveRoleView(role) {
-      activeRoleView = role;
-      const patientPanel = document.getElementById("patientViewPanel");
-      const doctorPanel = document.getElementById("doctorViewPanel");
-      const btnPatient = document.getElementById("btnPatientView");
-      const btnDoctor = document.getElementById("btnDoctorView");
-
-      if (!patientPanel || !doctorPanel) return;
-
-      if (role === "doctor") {
-        patientPanel.classList.add("hidden");
-        doctorPanel.classList.remove("hidden");
-        btnDoctor.className = "px-4 py-2 rounded-lg text-sm font-bold bg-teal-600 text-white transition";
-        btnPatient.className = "px-4 py-2 rounded-lg text-sm font-bold bg-white text-slate-700 hover:bg-slate-50 transition";
-      } else {
-        doctorPanel.classList.add("hidden");
-        patientPanel.classList.remove("hidden");
-        btnPatient.className = "px-4 py-2 rounded-lg text-sm font-bold bg-teal-600 text-white transition";
-        btnDoctor.className = "px-4 py-2 rounded-lg text-sm font-bold bg-white text-slate-700 hover:bg-slate-50 transition";
-      }
-      refreshAppointmentsViews();
-    }
-
     function statusBadgeClass(status) {
       if (status === "Confirmed") return "bg-emerald-100 text-emerald-800";
       if (status === "Completed") return "bg-blue-100 text-blue-800";
       if (status === "Cancelled") return "bg-rose-100 text-rose-800";
       return "bg-amber-100 text-amber-800";
-    }
-
-    async function checkJavaBackend() {
-      const badge = document.getElementById("javaApiBadge");
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 1500);
-        const res = await fetch(`${JAVA_API_BASE}/health`, { signal: controller.signal });
-        clearTimeout(timer);
-        if (res.ok) {
-          javaApiOnline = true;
-          if (badge) {
-            badge.textContent = "Java API: Connected";
-            badge.className = "text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200";
-          }
-          return true;
-        }
-      } catch (_) {
-        javaApiOnline = false;
-      }
-      if (badge) {
-        badge.textContent = "Supabase Active (Java Offline)";
-        badge.className = "text-xs font-medium px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200";
-      }
-      return false;
     }
 
     async function loadCatalog() {
@@ -435,7 +353,7 @@
       renderDepartments();
       renderDoctors();
       populateDoctorSelect();
-      if (currentUser) refreshAppointmentsViews();
+      if (currentUser) loadMyAppointments();
     }
 
     function renderDepartments() {
@@ -478,7 +396,6 @@
     }
 
     function selectDoctorAndBook(docId) {
-      setActiveRoleView("patient");
       document.getElementById("doctorSelect").value = docId;
       document.getElementById("portal").scrollIntoView({ behavior: "smooth" });
       if (!currentUser) openAuthModal("login");
@@ -529,7 +446,7 @@
           options: { data: { full_name: fullName } }
         });
         if (error) return (document.getElementById("authError").textContent = error.message);
-        alert("Account created! You can now log in or check your email if confirmation is enabled.");
+        alert("Account created! You can now log in.");
         switchAuthTab("login");
       } else {
         const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -571,28 +488,6 @@
         status: "Pending"
       };
 
-      if (javaApiOnline) {
-        try {
-          await fetch(`${JAVA_API_BASE}/appointments`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              bookingCode: payload.booking_code,
-              patientId: payload.patient_id,
-              patientName: payload.patient_name,
-              patientPhone: payload.patient_phone,
-              hospitalBranch: payload.hospital_branch,
-              doctorId: payload.doctor_id,
-              departmentId: payload.department_id,
-              appointmentDate: payload.appointment_date,
-              timeSlot: payload.time_slot,
-              symptoms: payload.symptoms,
-              status: "Pending"
-            })
-          });
-        } catch (_) {}
-      }
-
       const { error } = await supabaseClient.from("appointments").insert([payload]);
       if (error) {
         msgEl.className = "text-xs font-medium text-red-600";
@@ -601,47 +496,16 @@
       }
 
       msgEl.className = "text-xs font-medium text-teal-700";
-      msgEl.textContent = `Appointment sent to Doctor Desk! Booking ID: ${bookingCode}`;
+      msgEl.textContent = `Appointment sent to doctor! Booking ID: ${bookingCode}`;
       document.getElementById("appointmentForm").reset();
       document.getElementById("patientName").value = currentUser.user_metadata?.full_name || "";
-      await refreshAppointmentsViews();
+      await loadMyAppointments();
     }
 
-    async function updateAppointmentStatus(id, newStatus) {
-      if (javaApiOnline) {
-        try {
-          await fetch(`${JAVA_API_BASE}/appointments/${id}/status`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: newStatus })
-          });
-        } catch (_) {}
-      }
-
-      const { data, error } = await supabaseClient
-        .from("appointments")
-        .update({ status: newStatus })
-        .eq("id", id)
-        .select();
-
-      if (error) {
-        alert("Could not update status: " + error.message);
-        return;
-      }
-      if (!data || data.length === 0) {
-        alert("Status update blocked by Supabase RLS policy. Please run the SQL UPDATE policy.");
-        return;
-      }
-      await refreshAppointmentsViews();
-    }
-
-    async function refreshAppointmentsViews() {
+    async function loadMyAppointments() {
       if (!currentUser) return;
-
       const myContainer = document.getElementById("appointmentsList");
-      const queueContainer = document.getElementById("hospitalQueueList");
 
-      // Patient View: only this patient's sent appointments & status badge (no Confirm/Complete/Cancel buttons here)
       const { data: myData, error: myError } = await supabaseClient
         .from("appointments")
         .select("*")
@@ -650,59 +514,25 @@
 
       if (myError) {
         myContainer.innerHTML = `<p class="text-sm text-red-600 bg-red-50 p-4 rounded-xl border border-red-200">Error: ${myError.message}</p>`;
-      } else if (!myData || !myData.length) {
-        myContainer.innerHTML = `<p class="text-sm text-slate-500 bg-slate-50 p-5 rounded-xl border border-slate-200">No appointments sent yet.</p>`;
-      } else {
-        myContainer.innerHTML = myData.map(a => {
-          const doc = doctors.find(d => Number(d.id) === Number(a.doctor_id));
-          const dept = departments.find(d => Number(d.id) === Number(a.department_id));
-          return `
-            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap justify-between items-center gap-3">
-              <div>
-                <div class="text-xs font-bold text-teal-700">${a.booking_code} • ${a.hospital_branch}</div>
-                <div class="font-bold text-slate-900">${doc?.name || "Specialist Doctor"} (${dept?.name || doc?.dept_name || "Department"})</div>
-                <div class="text-xs text-slate-600 mt-0.5">Date: <strong>${a.appointment_date}</strong> | Slot: <strong>${a.time_slot}</strong></div>
-              </div>
-              <span class="px-3 py-1 rounded-full text-xs font-bold ${statusBadgeClass(a.status)}">${a.status}</span>
-            </div>
-          `;
-        }).join("");
-      }
-
-      // Doctor Page: incoming appointments sent by patients with Confirm / Complete / Cancel buttons
-      const { data: allData, error: allError } = await supabaseClient
-        .from("appointments")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (allError) {
-        queueContainer.innerHTML = `<p class="text-red-600">Error loading doctor queue: ${allError.message}</p>`;
         return;
       }
 
-      if (!allData || !allData.length) {
-        queueContainer.innerHTML = `<p class="text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-200">No appointments sent by patients yet.</p>`;
+      if (!myData || !myData.length) {
+        myContainer.innerHTML = `<p class="text-sm text-slate-500 bg-slate-50 p-5 rounded-xl border border-slate-200">No appointments booked yet.</p>`;
         return;
       }
 
-      queueContainer.innerHTML = allData.map(apt => {
-        const doc = doctors.find(d => Number(d.id) === Number(apt.doctor_id));
+      myContainer.innerHTML = myData.map(a => {
+        const doc = doctors.find(d => Number(d.id) === Number(a.doctor_id));
+        const dept = departments.find(d => Number(d.id) === Number(a.department_id));
         return `
-          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-4">
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap justify-between items-center gap-3">
             <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-bold text-slate-900">${apt.booking_code}</span>
-                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusBadgeClass(apt.status)}">${apt.status}</span>
-                <span class="text-xs text-slate-500">• ${doc?.name || "Assigned Doctor"}</span>
-              </div>
-              <p class="font-medium text-slate-800 mt-1">Patient: ${apt.patient_name} (${apt.patient_phone})</p>
-              <p class="text-xs text-slate-600">Date: <strong>${apt.appointment_date}</strong> | Slot: <strong>${apt.time_slot}</strong>${apt.symptoms ? ` | Symptoms: ${apt.symptoms}` : ""}</p>
+              <div class="text-xs font-bold text-teal-700">${a.booking_code} • ${a.hospital_branch}</div>
+              <div class="font-bold text-slate-900">${doc?.name || "Specialist Doctor"} (${dept?.name || doc?.dept_name || "Department"})</div>
+              <div class="text-xs text-slate-600 mt-0.5">Date: <strong>${a.appointment_date}</strong> | Slot: <strong>${a.time_slot}</strong></div>
             </div>
-            <div class="flex items-center gap-2">
-              <button onclick="updateAppointmentStatus(${apt.id}, 'Confirmed')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Confirm</button>
-              <button onclick="updateAppointmentStatus(${apt.id}, 'Completed')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700">Complete</button>
-              <button onclick="updateAppointmentStatus(${apt.id}, 'Cancelled')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200">Cancel</button>
-            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold ${statusBadgeClass(a.status)}">${a.status}</span>
           </div>
         `;
       }).join("");
@@ -724,9 +554,9 @@
         `;
         portalBtn.classList.add("hidden");
         bookingArea.classList.remove("hidden");
-        statusText.textContent = `Signed in as ${currentUser.email} — use the switcher below to toggle Patient Page or Doctor Page.`;
+        statusText.textContent = `Signed in as ${currentUser.email} — book and track your appointments below.`;
         document.getElementById("patientName").value = currentUser.user_metadata?.full_name || "";
-        setActiveRoleView(activeRoleView);
+        loadMyAppointments();
       } else {
         authControls.innerHTML = `
           <button onclick="openAuthModal('login')" class="px-4 py-2 text-sm font-semibold rounded-lg border border-teal-600 text-teal-700 hover:bg-teal-50 transition">Login</button>
@@ -734,7 +564,7 @@
         `;
         portalBtn.classList.remove("hidden");
         bookingArea.classList.add("hidden");
-        statusText.textContent = "Sign in with Google or Email/Password to book or manage appointments.";
+        statusText.textContent = "Sign in with Google or Email/Password to book and track your appointments.";
       }
     }
 
@@ -743,7 +573,6 @@
     (async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
       updateSessionUI(session);
-      await checkJavaBackend();
       await loadCatalog();
     })();
   </script>
