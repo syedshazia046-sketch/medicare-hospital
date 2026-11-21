@@ -504,6 +504,11 @@
       await supabaseClient.auth.signOut();
     }
 
+    async function switchAccount() {
+      await supabaseClient.auth.signOut();
+      openAuthModal("login");
+    }
+
     async function submitAppointment(e) {
       e.preventDefault();
       if (!currentUser) return openAuthModal("login");
@@ -671,6 +676,7 @@
         const displayName = currentUser.user_metadata?.full_name || currentUser.email;
         authControls.innerHTML = `
           <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Hi, ${displayName}</span>
+          <button onclick="switchAccount()" class="px-3 py-2 text-xs font-semibold rounded-lg border border-teal-600 text-teal-700 hover:bg-teal-50">Switch Account</button>
           <button onclick="signOut()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-200 text-slate-800 hover:bg-slate-300">Logout</button>
         `;
         portalBtn.classList.add("hidden");
