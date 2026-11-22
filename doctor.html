@@ -207,9 +207,8 @@
     let currentUser = null;
     let javaApiOnline = false;
     let doctors = [];
-    let selectedAppointmentId = null;
+    let selectedAppointment = null;
 
-    // Specialty-specific services & clinical tools per department
     const specialtyServicesMap = {
       "Cardiology": [
         { name: "12-Lead Digital ECG", code: "CARD-101", turnAround: "15 mins" },
@@ -323,6 +322,13 @@
       loadDoctorQueue();
     }
 
+    function buildRowFilter(apt) {
+      if (apt.id !== undefined && apt.id !== null && String(apt.id) !== "") {
+        return `id=eq.${apt.id}`;
+      }
+      return `booking_code=eq.${encodeURIComponent(apt.booking_code || "")}`;
+    }
+
     async function loadDoctorQueue() {
       if (!currentUser) return;
       const doc = getSelectedDoctor();
@@ -351,8 +357,9 @@
         return;
       }
 
-      container.innerHTML = list.map(apt => {
+      container.innerHTML = list.map((apt, idx) => {
         const assignedDoc = doctors.find(d => Number(d.id) === Number(apt.doctor_id));
+        const encodedApt = encodeURIComponent(JSON.stringify(apt));
         return `
           <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
             <div class="flex flex-wrap justify-between items-start gap-3">
@@ -372,16 +379,16 @@
               </div>
 
               <div class="flex flex-wrap items-center gap-2">
-                <button onclick="updateStatus(${apt.id}, 'Confirmed')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">
+                <button onclick="updateStatusByIndex(${idx}, 'Confirmed')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">
                   Accept
                 </button>
-                <button onclick='openClinicalModal(${JSON.stringify(apt).replace(/'/g, "'")})' class="px-3 py-1.5 rounded-lg bg-teal-700 text-white text-xs font-bold hover:bg-teal-800">
+                <button onclick="openClinicalModalByIndex(${idx})" class="px-3 py-1.5 rounded-lg bg-teal-700 text-white text-xs font-bold hover:bg-teal-800">
                   Consult & Order Services
                 </button>
-                <button onclick="updateStatus(${apt.id}, 'Completed')" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700">
+                <button onclick="updateStatusByIndex(${idx}, 'Completed')" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700">
                   Complete
                 </button>
-                <button onclick="updateStatus(${apt.id}, 'Cancelled')" class="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-700 text-xs font-bold hover:bg-rose-200">
+                <button onclick="updateStatusByIndex(${idx}, 'Cancelled')" class="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-700 text-xs font-bold hover:bg-rose-200">
                   Decline
                 </button>
               </div>
@@ -389,23 +396,41 @@
           </div>
         `;
       }).join("");
+
+      window._currentQueueList = list;
     }
 
-    async function updateStatus(id, newStatus, extraFields = {}) {
+    async function updateStatusByIndex(index, newStatus) {
+      const apt = (window._currentQueueList || [])[index];
+      if (!apt) return alert("Appointment record not found.");
+      await updateStatus(apt, newStatus);
+    }
+
+    function openClinicalModalByIndex(index) {
+      const apt = (window._currentQueueList || [])[index];
+      if (apt) openClinicalModal(apt);
+    }
+
+    async function updateStatus(apt, newStatus, extraFields = {}) {
+      const filterParam = buildRowFilter(apt);
+      const updatePayload = { status: newStatus, ...extraFields };
+
       if (javaApiOnline) {
         try {
-          await fetch(`${JAVA_API_BASE}/appointments/${id}/status`, {
+          await fetch(`${JAVA_API_BASE}/appointments?${filterParam}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify(updatePayload)
           });
         } catch (_) {}
       }
 
+      const [col, rawVal] = filterParam.split("=eq.");
+      const val = decodeURIComponent(rawVal || "");
       const { error } = await supabaseClient
         .from("appointments")
-        .update({ status: newStatus, ...extraFields })
-        .eq("id", id);
+        .update(updatePayload)
+        .eq(col, isNaN(Number(val)) ? val : Number(val));
 
       if (error) {
         alert("Update failed: " + error.message);
@@ -415,7 +440,7 @@
     }
 
     function openClinicalModal(apt) {
-      selectedAppointmentId = apt.id;
+      selectedAppointment = apt;
       const doc = doctors.find(d => Number(d.id) === Number(apt.doctor_id)) || getSelectedDoctor();
       const services = specialtyServicesMap[doc.dept_name] || specialtyServicesMap["General Medicine"];
       const existingServices = (apt.ordered_services || "").split(", ").filter(Boolean);
@@ -441,11 +466,11 @@
     }
 
     async function saveClinicalDetails(newStatus) {
-      if (!selectedAppointmentId) return;
+      if (!selectedAppointment) return;
       const checkedServices = Array.from(document.querySelectorAll(".service-checkbox:checked")).map(cb => cb.value);
       const notes = document.getElementById("modalDoctorNotes").value.trim();
 
-      await updateStatus(selectedAppointmentId, newStatus, {
+      await updateStatus(selectedAppointment, newStatus, {
         ordered_services: checkedServices.join(", "),
         doctor_notes: notes
       });
