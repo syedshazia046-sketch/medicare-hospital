@@ -229,7 +229,7 @@
       <div class="pro-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm" data-aos="fade-up" data-aos-delay="120">
         <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-800 font-bold flex items-center justify-center mb-4">2</div>
         <h3 class="font-bold text-slate-900 mb-1">Sent to Doctor Queue</h3>
-        <p class="text-sm text-slate-600">Your request is saved in Supabase and sent directly to the doctor's appointment dashboard.</p>
+        <p class="text-sm text-slate-600">Your request is routed through our Java backend into Supabase and sent directly to the doctor's dashboard.</p>
       </div>
       <div class="pro-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm" data-aos="fade-up" data-aos-delay="240">
         <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-800 font-bold flex items-center justify-center mb-4">3</div>
@@ -372,7 +372,7 @@
       </div>
       <div class="flex items-center gap-4 text-xs text-slate-400">
         <a href="doctor.html" class="text-teal-400 hover:underline font-semibold">Doctor Dashboard</a>
-        <span>• Hosted on GitHub Pages • Powered by Supabase</span>
+        <span>• Hosted on GitHub Pages • Powered by Java & Supabase</span>
       </div>
     </div>
   </footer>
@@ -427,9 +427,52 @@
     </div>
   </div>
 
+  <!-- Floating MediCare AI Assistant -->
+  <div id="aiChatWidget" class="fixed bottom-5 right-5 z-50">
+    <!-- Chat Panel -->
+    <div id="aiChatPanel" class="hidden mb-3 w-80 sm:w-96 bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden">
+      <div class="bg-teal-900 text-white px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <div>
+            <div class="text-sm font-bold leading-tight">MediCare AI Assistant</div>
+            <div class="text-[11px] text-teal-200">24/7 Patient Help & Routing</div>
+          </div>
+        </div>
+        <button onclick="toggleAiChat(false)" class="text-teal-200 hover:text-white text-lg font-bold leading-none">×</button>
+      </div>
+
+      <div id="aiChatMessages" class="p-3.5 h-72 overflow-y-auto space-y-2.5 bg-slate-50 text-xs">
+        <div class="bg-white border border-slate-200 text-slate-800 p-3 rounded-xl rounded-tl-none shadow-2xs">
+          Hi! I can help you find a department or doctor, check OPD/emergency timings, or guide you through booking an appointment.
+        </div>
+      </div>
+
+      <div class="px-3.5 pt-2 bg-slate-50 flex flex-wrap gap-1.5">
+        <button onclick="sendQuickPrompt('Timings & Emergency')" class="text-[11px] px-2.5 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100">Timings & Emergency</button>
+        <button onclick="sendQuickPrompt('Doctors & Fees')" class="text-[11px] px-2.5 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100">Doctors & Fees</button>
+        <button onclick="sendQuickPrompt('How to Book')" class="text-[11px] px-2.5 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100">How to Book</button>
+      </div>
+
+      <form onsubmit="handleAiChatSubmit(event)" class="p-3 bg-white border-t border-slate-200 flex gap-2">
+        <input id="aiChatInput" type="text" required placeholder="Ask about doctors, slots, fees..."
+          class="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        <button type="submit" class="px-3.5 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition">
+          Send
+        </button>
+      </form>
+    </div>
+
+    <!-- Toggle Button -->
+    <button onclick="toggleAiChat()" class="ml-auto flex items-center gap-2 px-4 py-3 rounded-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xl hover:-translate-y-0.5 active:scale-95 transition">
+      <span>AI Chat</span>
+    </button>
+  </div>
+
   <script>
     const SUPABASE_URL = "https://bhltltxzqeuibvlvfmer.supabase.co";
     const SUPABASE_KEY = "sb_publishable_MRW2MNBJaU_uLD90oQa4QQ_1Hu8Xq8f";
+    const JAVA_API = "http://localhost:8080/api/appointments";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let authMode = "login";
@@ -607,15 +650,27 @@
         status: "Pending"
       };
 
-      const { error } = await supabaseClient.from("appointments").insert([payload]);
-      if (error) {
-        msgEl.className = "text-xs font-medium text-red-600";
-        msgEl.textContent = "Error sending appointment: " + error.message;
-        return;
+      let savedViaJava = false;
+      try {
+        const res = await fetch(JAVA_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) savedViaJava = true;
+      } catch (_) {}
+
+      if (!savedViaJava) {
+        const { error } = await supabaseClient.from("appointments").insert([payload]);
+        if (error) {
+          msgEl.className = "text-xs font-medium text-red-600";
+          msgEl.textContent = "Error sending appointment: " + error.message;
+          return;
+        }
       }
 
       msgEl.className = "text-xs font-medium text-teal-700";
-      msgEl.textContent = `Appointment sent to doctor! Booking ID: ${bookingCode}`;
+      msgEl.textContent = `Appointment sent${savedViaJava ? " via Java API" : " to doctor"}! Booking ID: ${bookingCode}`;
       document.getElementById("appointmentForm").reset();
       document.getElementById("patientName").value = currentUser.user_metadata?.full_name || "";
       await loadMyAppointments();
@@ -624,16 +679,25 @@
     async function loadMyAppointments() {
       if (!currentUser) return;
       const myContainer = document.getElementById("appointmentsList");
+      let myData = null;
 
-      const { data: myData, error: myError } = await supabaseClient
-        .from("appointments")
-        .select("*")
-        .eq("patient_id", currentUser.id)
-        .order("created_at", { ascending: false });
+      try {
+        const res = await fetch(`${JAVA_API}?patient_id=eq.${currentUser.id}`);
+        if (res.ok) myData = await res.json();
+      } catch (_) {}
 
-      if (myError) {
-        myContainer.innerHTML = `<p class="text-sm text-red-600 bg-red-50 p-4 rounded-xl border border-red-200">Error: ${myError.message}</p>`;
-        return;
+      if (!myData) {
+        const { data, error } = await supabaseClient
+          .from("appointments")
+          .select("*")
+          .eq("patient_id", currentUser.id)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          myContainer.innerHTML = `<p class="text-sm text-red-600 bg-red-50 p-4 rounded-xl border border-red-200">Error: ${error.message}</p>`;
+          return;
+        }
+        myData = data;
       }
 
       if (!myData || !myData.length) {
@@ -685,6 +749,66 @@
         bookingArea.classList.add("hidden");
         statusText.textContent = "Sign in with Google or Email/Password to book and track your appointments.";
       }
+    }
+
+    // Floating AI Assistant Helpers
+    function toggleAiChat(forceState) {
+      const panel = document.getElementById("aiChatPanel");
+      const shouldOpen = typeof forceState === "boolean" ? forceState : panel.classList.contains("hidden");
+      panel.classList.toggle("hidden", !shouldOpen);
+      if (shouldOpen) {
+        setTimeout(() => document.getElementById("aiChatInput")?.focus(), 50);
+      }
+    }
+
+    function appendChatBubble(text, sender = "bot") {
+      const box = document.getElementById("aiChatMessages");
+      const div = document.createElement("div");
+      if (sender === "user") {
+        div.className = "bg-teal-600 text-white p-2.5 rounded-xl rounded-tr-none ml-auto max-w-[85%]";
+      } else {
+        div.className = "bg-white border border-slate-200 text-slate-800 p-3 rounded-xl rounded-tl-none max-w-[90%] shadow-2xs whitespace-pre-line";
+      }
+      div.textContent = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function generateHospitalReply(rawMsg) {
+      const q = rawMsg.toLowerCase();
+      if (q.includes("emergency") || q.includes("ambulance") || q.includes("timing") || q.includes("opd") || q.includes("hour")) {
+        return "OPD Timings: Mon – Sat, 8:00 AM – 8:00 PM.\n24/7 Emergency & Trauma Helpline: +91 1800-425-9911 (Ambulance Dispatch Active).";
+      }
+      if (q.includes("fee") || q.includes("doctor") || q.includes("cardio") || q.includes("neuro") || q.includes("ortho") || q.includes("pediatric") || q.includes("medicine")) {
+        const list = doctors.length
+          ? doctors.map(d => `• ${d.name} (${d.dept_name}) — ₹${d.consultation_fee} [${d.available_days}]`).join("\n")
+          : "• Cardiology (Dr. Arvind Sharma) — ₹800\n• Neurology (Dr. Priya Nair) — ₹750\n• Orthopedics (Dr. Rajesh Verma) — ₹700\n• Pediatrics (Dr. Sneha Reddy) — ₹500\n• General Medicine (Dr. Karthik Rao) — ₹450";
+        return "Available Specialists & Fees:\n" + list;
+      }
+      if (q.includes("book") || q.includes("appointment") || q.includes("slot") || q.includes("login")) {
+        document.getElementById("portal")?.scrollIntoView({ behavior: "smooth" });
+        return "1. Click Login / Sign Up (Google or Email).\n2. Choose your hospital branch, doctor, date, and time slot.\n3. Submit to send your request and track its status under 'Your Sent Appointments'.";
+      }
+      if (q.includes("doctor page") || q.includes("doctor portal") || q.includes("confirm")) {
+        return "Doctors can open 'Doctor Page →' in the top navigation bar (doctor.html) to review incoming patient requests and update statuses.";
+      }
+      return "I can help with doctor fees, department specialists, OPD/emergency timings (+91 1800-425-9911), or booking steps. Try clicking one of the quick buttons above!";
+    }
+
+    function sendQuickPrompt(promptText) {
+      toggleAiChat(true);
+      appendChatBubble(promptText, "user");
+      setTimeout(() => appendChatBubble(generateHospitalReply(promptText), "bot"), 200);
+    }
+
+    function handleAiChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("aiChatInput");
+      const msg = input.value.trim();
+      if (!msg) return;
+      input.value = "";
+      appendChatBubble(msg, "user");
+      setTimeout(() => appendChatBubble(generateHospitalReply(msg), "bot"), 200);
     }
 
     // Top Scroll Progress Bar
