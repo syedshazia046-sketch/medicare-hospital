@@ -117,7 +117,14 @@
         <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-live-dot"></span>
         <span>24/7 Emergency & Trauma Helpline: <strong>+91 1800-425-9911</strong> | Ambulance Dispatch Active</span>
       </span>
-      <span>OPD Timings: Mon – Sat, 8:00 AM – 8:00 PM</span>
+      <div class="flex items-center gap-3">
+        <span id="javaServerPill" class="px-2.5 py-0.5 rounded-full bg-teal-900 border border-teal-700 text-teal-200 font-semibold">
+          Checking Java Server...
+        </span>
+        <button onclick="openJavaSummaryModal()" class="underline hover:text-white font-semibold">
+          Java Live Summary
+        </button>
+      </div>
     </div>
   </div>
 
@@ -170,7 +177,7 @@
           Trusted Specialists. <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-200">Instant Hospital Appointments.</span>
         </h1>
         <p class="text-teal-100 text-base sm:text-lg mb-7 max-w-xl">
-          Book verified doctor consultations directly routed to our hospital departments, track real-time approval status, and manage your visit history in one place.
+          Book verified doctor consultations directly routed through our Java backend and cloud database, track real-time approval status, and manage your digital OPD pass in one place.
         </p>
 
         <!-- Animated EKG Heartbeat Wave -->
@@ -184,9 +191,9 @@
           <a href="#portal" class="px-6 py-3.5 rounded-xl bg-white text-teal-950 font-bold text-sm shadow-lg shadow-teal-950/30 hover:bg-teal-50 hover:-translate-y-0.5 active:scale-95 transition duration-200">
             Book an Appointment
           </a>
-          <a href="#process" class="px-6 py-3.5 rounded-xl bg-teal-800/70 border border-teal-400/40 text-white font-semibold text-sm hover:bg-teal-700 hover:-translate-y-0.5 transition duration-200">
-            How Appointments Work
-          </a>
+          <button onclick="openJavaSummaryModal()" class="px-6 py-3.5 rounded-xl bg-teal-800/70 border border-teal-400/40 text-white font-semibold text-sm hover:bg-teal-700 hover:-translate-y-0.5 transition duration-200">
+            Live Java Analytics
+          </button>
         </div>
       </div>
 
@@ -228,18 +235,18 @@
       </div>
       <div class="pro-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm" data-aos="fade-up" data-aos-delay="120">
         <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-800 font-bold flex items-center justify-center mb-4">2</div>
-        <h3 class="font-bold text-slate-900 mb-1">Sent to Doctor Queue</h3>
-        <p class="text-sm text-slate-600">Your request is routed through our Java backend into Supabase and sent directly to the doctor's dashboard.</p>
+        <h3 class="font-bold text-slate-900 mb-1">Java Validation & Sync</h3>
+        <p class="text-sm text-slate-600">Our Java backend validates your request, logs it in CMD, and saves it to Supabase for the doctor.</p>
       </div>
       <div class="pro-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm" data-aos="fade-up" data-aos-delay="240">
         <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-800 font-bold flex items-center justify-center mb-4">3</div>
         <h3 class="font-bold text-slate-900 mb-1">Doctor Confirmation</h3>
-        <p class="text-sm text-slate-600">The doctor reviews your request and updates your status from <em>Pending</em> to <em>Confirmed</em>.</p>
+        <p class="text-sm text-slate-600">The doctor reviews your symptoms, orders lab services, and updates your status to <em>Confirmed</em>.</p>
       </div>
       <div class="pro-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm" data-aos="fade-up" data-aos-delay="360">
         <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-800 font-bold flex items-center justify-center mb-4">4</div>
-        <h3 class="font-bold text-slate-900 mb-1">Visit & Consultation</h3>
-        <p class="text-sm text-slate-600">Arrive 15 minutes early with your Booking ID for smooth OPD check-in and consultation.</p>
+        <h3 class="font-bold text-slate-900 mb-1">Digital OPD Pass</h3>
+        <p class="text-sm text-slate-600">View your digital OPD pass and doctor notes directly in your portal for smooth hospital check-in.</p>
       </div>
     </div>
   </section>
@@ -251,11 +258,18 @@
   </section>
 
   <section id="doctors" class="py-12 px-4 max-w-7xl mx-auto" data-aos="fade-up">
-    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-      <h2 class="text-2xl font-bold text-slate-900">Find a Doctor</h2>
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-5">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900">Find a Doctor</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Filter by department or search by specialist name</p>
+      </div>
       <input id="doctorSearch" oninput="renderDoctors()" type="text" placeholder="Search by doctor or specialty..."
         class="px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-teal-500 transition" />
     </div>
+
+    <!-- Interactive Department Filter Pills -->
+    <div id="deptFilterPills" class="flex flex-wrap gap-2 mb-6"></div>
+
     <div id="doctorsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
   </section>
 
@@ -299,6 +313,18 @@
         <!-- Appointment Form -->
         <form id="appointmentForm" onsubmit="submitAppointment(event)" class="lg:col-span-5 space-y-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
           <h3 class="font-bold text-lg text-slate-900">New Appointment Request</h3>
+
+          <!-- Smart Symptom-to-Doctor Quick Matcher -->
+          <div class="bg-white p-3 rounded-xl border border-slate-200">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-teal-700 mb-2">Quick Symptom Matcher</div>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="applySymptomPreset(1, 'Chest discomfort / Blood pressure check')" class="text-[11px] px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 hover:bg-teal-100 font-medium transition">Chest / BP</button>
+              <button type="button" onclick="applySymptomPreset(2, 'Migraine / Headache / Nerve tingling')" class="text-[11px] px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 hover:bg-teal-100 font-medium transition">Migraine / Nerve</button>
+              <button type="button" onclick="applySymptomPreset(3, 'Joint / Knee / Back pain')" class="text-[11px] px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 hover:bg-teal-100 font-medium transition">Joint / Bone</button>
+              <button type="button" onclick="applySymptomPreset(4, 'Child fever / Pediatric consultation')" class="text-[11px] px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 hover:bg-teal-100 font-medium transition">Child Care</button>
+              <button type="button" onclick="applySymptomPreset(5, 'General fever / Routine health checkup')" class="text-[11px] px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 hover:bg-teal-100 font-medium transition">Fever / Checkup</button>
+            </div>
+          </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Patient Full Name *</label>
@@ -350,10 +376,10 @@
           <p id="bookingMsg" class="text-xs font-medium text-teal-700"></p>
         </form>
 
-        <!-- My Sent Appointments List (Status Badge Only) -->
+        <!-- My Sent Appointments List + Digital OPD Pass View -->
         <div class="lg:col-span-7">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-lg text-slate-900">Your Sent Appointments</h3>
+            <h3 class="font-bold text-lg text-slate-900">Your Sent Appointments & OPD Passes</h3>
             <button onclick="loadMyAppointments()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
               Refresh Status
             </button>
@@ -427,6 +453,71 @@
     </div>
   </div>
 
+  <!-- Live Java Analytics Summary Modal -->
+  <div id="javaSummaryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 z-50">
+    <div class="modal-animate bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <button onclick="closeJavaSummaryModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold transition">×</button>
+      <span class="text-xs font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full">Java Backend Analytics</span>
+      <h3 class="text-xl font-bold text-slate-900 mt-2">Hospital Appointment Summary</h3>
+      <p id="javaSummarySource" class="text-xs text-slate-500 mt-0.5 mb-4">Fetching live counts from Java Server (http://localhost:8080/api/summary)...</p>
+
+      <div class="grid grid-cols-2 gap-3 text-center">
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+          <div id="sumTotal" class="text-2xl font-extrabold text-slate-900">-</div>
+          <div class="text-xs text-slate-500">Total Bookings</div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+          <div id="sumPending" class="text-2xl font-extrabold text-amber-700">-</div>
+          <div class="text-xs text-amber-800">Pending</div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+          <div id="sumConfirmed" class="text-2xl font-extrabold text-emerald-700">-</div>
+          <div class="text-xs text-emerald-800">Confirmed</div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
+          <div id="sumCompleted" class="text-2xl font-extrabold text-blue-700">-</div>
+          <div class="text-xs text-blue-800">Completed</div>
+        </div>
+      </div>
+
+      <div class="mt-4 p-4 rounded-xl bg-teal-950 text-white flex items-center justify-between">
+        <span class="text-xs text-teal-200 font-semibold">Confirmed & Completed OPD Fees</span>
+        <span id="sumRevenue" class="text-lg font-extrabold text-teal-300">Rs. 0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Digital OPD Pass Modal -->
+  <div id="opdPassModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 z-50">
+    <div class="modal-animate bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-t-4 border-teal-600">
+      <button onclick="closeOpdPassModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl font-bold transition">×</button>
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-teal-700">MediCare Digital OPD Pass</span>
+        <span id="passStatusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">Pending</span>
+      </div>
+      <h3 id="passBookingCode" class="text-2xl font-extrabold text-slate-900">MC-000000</h3>
+      <p id="passBranch" class="text-xs text-slate-500 mt-0.5 mb-4"></p>
+
+      <div class="space-y-2 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div class="flex justify-between"><span class="text-slate-500">Patient Name:</span><strong id="passPatient" class="text-slate-900"></strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Specialist:</span><strong id="passDoctor" class="text-slate-900"></strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Date & Slot:</span><strong id="passDateTime" class="text-slate-900"></strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Consultation Fee:</span><strong id="passFee" class="text-teal-700"></strong></div>
+      </div>
+
+      <div id="passClinicalExtras" class="mt-3 space-y-2 text-xs"></div>
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition">
+          Print OPD Pass
+        </button>
+        <button onclick="closeOpdPassModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Floating MediCare AI Assistant -->
   <div id="aiChatWidget" class="fixed bottom-5 right-5 z-50">
     <!-- Chat Panel -->
@@ -472,13 +563,15 @@
   <script>
     const SUPABASE_URL = "https://bhltltxzqeuibvlvfmer.supabase.co";
     const SUPABASE_KEY = "sb_publishable_MRW2MNBJaU_uLD90oQa4QQ_1Hu8Xq8f";
-    const JAVA_API = "http://localhost:8080/api/appointments";
+    const JAVA_BASE = "http://localhost:8080/api";
+    const JAVA_API = `${JAVA_BASE}/appointments`;
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let authMode = "login";
     let currentUser = null;
     let departments = [];
     let doctors = [];
+    let selectedDeptFilter = "All";
 
     const fallbackDepartments = [
       { id: 1, name: "Cardiology", description: "Heart care, ECG, echo & cardiac specialists." },
@@ -503,6 +596,59 @@
       return "bg-amber-100 text-amber-800";
     }
 
+    async function checkJavaStatus() {
+      const pill = document.getElementById("javaServerPill");
+      try {
+        const res = await fetch(`${JAVA_BASE}/health`);
+        if (res.ok) {
+          pill.textContent = "Java Server: Online (Port 8080)";
+          pill.className = "px-2.5 py-0.5 rounded-full bg-emerald-900/70 border border-emerald-600 text-emerald-200 font-semibold";
+          return;
+        }
+      } catch (_) {}
+      pill.textContent = "Cloud Mode (Java Standby)";
+    }
+
+    async function openJavaSummaryModal() {
+      const modal = document.getElementById("javaSummaryModal");
+      const srcEl = document.getElementById("javaSummarySource");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      try {
+        const res = await fetch(`${JAVA_BASE}/summary`);
+        if (res.ok) {
+          const s = await res.json();
+          srcEl.textContent = "Computed live by HospitalServer.java (/api/summary) & printed in CMD.";
+          document.getElementById("sumTotal").textContent = s.total ?? 0;
+          document.getElementById("sumPending").textContent = s.pending ?? 0;
+          document.getElementById("sumConfirmed").textContent = s.confirmed ?? 0;
+          document.getElementById("sumCompleted").textContent = s.completed ?? 0;
+          document.getElementById("sumRevenue").textContent = `Rs. ${s.confirmedAndCompletedRevenue ?? 0}`;
+          return;
+        }
+      } catch (_) {}
+
+      const { data } = await supabaseClient.from("appointments").select("*");
+      const list = data || [];
+      const fees = { 1: 800, 2: 750, 3: 700, 4: 500, 5: 450 };
+      let rev = 0;
+      list.forEach(a => {
+        if (a.status === "Confirmed" || a.status === "Completed") rev += (fees[a.doctor_id] || 500);
+      });
+      srcEl.textContent = "Loaded from Supabase Cloud (Start HospitalServer.java for live Java CMD output).";
+      document.getElementById("sumTotal").textContent = list.length;
+      document.getElementById("sumPending").textContent = list.filter(a => a.status === "Pending").length;
+      document.getElementById("sumConfirmed").textContent = list.filter(a => a.status === "Confirmed").length;
+      document.getElementById("sumCompleted").textContent = list.filter(a => a.status === "Completed").length;
+      document.getElementById("sumRevenue").textContent = `Rs. ${rev}`;
+    }
+
+    function closeJavaSummaryModal() {
+      document.getElementById("javaSummaryModal").classList.add("hidden");
+      document.getElementById("javaSummaryModal").classList.remove("flex");
+    }
+
     async function loadCatalog() {
       const { data: deptData } = await supabaseClient.from("departments").select("*").order("id");
       const { data: docData } = await supabaseClient.from("doctors").select("*, departments(name)").order("id");
@@ -513,6 +659,7 @@
         : fallbackDoctors;
 
       renderDepartments();
+      renderDeptFilterPills();
       renderDoctors();
       populateDoctorSelect();
       if (currentUser) loadMyAppointments();
@@ -520,18 +667,44 @@
 
     function renderDepartments() {
       document.getElementById("departmentsGrid").innerHTML = departments.map((d, idx) => `
-        <div class="pro-card bg-white p-5 rounded-xl border border-slate-200 hover:border-teal-500" data-aos="fade-up" data-aos-delay="${idx * 70}">
+        <div onclick="setDeptFilter('${d.name}', true)" class="cursor-pointer pro-card bg-white p-5 rounded-xl border border-slate-200 hover:border-teal-500" data-aos="fade-up" data-aos-delay="${idx * 70}">
           <h3 class="font-bold text-slate-900">${d.name}</h3>
           <p class="text-xs text-slate-600 mt-1.5">${d.description || ""}</p>
         </div>
       `).join("");
     }
 
+    function renderDeptFilterPills() {
+      const names = ["All", ...departments.map(d => d.name)];
+      document.getElementById("deptFilterPills").innerHTML = names.map(name => {
+        const active = selectedDeptFilter === name;
+        return `
+          <button onclick="setDeptFilter('${name}')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
+            active ? "bg-teal-600 text-white shadow-xs" : "bg-white border border-slate-300 text-slate-700 hover:border-teal-500"
+          }">
+            ${name}
+          </button>
+        `;
+      }).join("");
+    }
+
+    function setDeptFilter(deptName, scrollToDoctors = false) {
+      selectedDeptFilter = deptName;
+      renderDeptFilterPills();
+      renderDoctors();
+      if (scrollToDoctors) {
+        document.getElementById("doctors")?.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+
     function renderDoctors() {
       const q = (document.getElementById("doctorSearch")?.value || "").toLowerCase();
-      const filtered = doctors.filter(doc =>
-        doc.name.toLowerCase().includes(q) || doc.dept_name.toLowerCase().includes(q)
-      );
+      const filtered = doctors.filter(doc => {
+        const matchesDept = selectedDeptFilter === "All" || doc.dept_name === selectedDeptFilter;
+        const matchesQuery = doc.name.toLowerCase().includes(q) || doc.dept_name.toLowerCase().includes(q);
+        return matchesDept && matchesQuery;
+      });
+
       document.getElementById("doctorsGrid").innerHTML = filtered.map((doc, idx) => `
         <div class="pro-card bg-white p-5 rounded-xl border border-slate-200 flex flex-col justify-between" data-aos="fade-up" data-aos-delay="${idx * 80}">
           <div>
@@ -555,6 +728,11 @@
       sel.innerHTML = doctors.map(d =>
         `<option value="${d.id}" data-dept="${d.department_id}">${d.name} (${d.dept_name}) — ₹${d.consultation_fee}</option>`
       ).join("");
+    }
+
+    function applySymptomPreset(docId, symptomText) {
+      document.getElementById("doctorSelect").value = docId;
+      document.getElementById("symptoms").value = symptomText;
     }
 
     function selectDoctorAndBook(docId) {
@@ -657,7 +835,14 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        if (res.ok) savedViaJava = true;
+        if (res.ok) {
+          savedViaJava = true;
+        } else if (res.status === 400) {
+          const errObj = await res.json();
+          msgEl.className = "text-xs font-medium text-red-600";
+          msgEl.textContent = errObj.error || "Invalid appointment details.";
+          return;
+        }
       } catch (_) {}
 
       if (!savedViaJava) {
@@ -700,12 +885,14 @@
         myData = data;
       }
 
+      window._patientAppointments = myData || [];
+
       if (!myData || !myData.length) {
         myContainer.innerHTML = `<p class="text-sm text-slate-500 bg-slate-50 p-5 rounded-xl border border-slate-200">No appointments booked yet.</p>`;
         return;
       }
 
-      myContainer.innerHTML = myData.map(a => {
+      myContainer.innerHTML = myData.map((a, idx) => {
         const doc = doctors.find(d => Number(d.id) === Number(a.doctor_id));
         const dept = departments.find(d => Number(d.id) === Number(a.department_id));
         return `
@@ -714,11 +901,49 @@
               <div class="text-xs font-bold text-teal-700">${a.booking_code} • ${a.hospital_branch}</div>
               <div class="font-bold text-slate-900">${doc?.name || "Specialist Doctor"} (${dept?.name || doc?.dept_name || "Department"})</div>
               <div class="text-xs text-slate-600 mt-0.5">Date: <strong>${a.appointment_date}</strong> | Slot: <strong>${a.time_slot}</strong></div>
+              ${a.doctor_notes ? `<div class="text-xs text-blue-800 mt-1"><strong>Doctor Note:</strong> ${a.doctor_notes}</div>` : ""}
             </div>
-            <span class="px-3 py-1 rounded-full text-xs font-bold ${statusBadgeClass(a.status)}">${a.status}</span>
+            <div class="flex items-center gap-2">
+              <button onclick="openOpdPassByIndex(${idx})" class="px-3 py-1 rounded-lg bg-white border border-slate-300 hover:border-teal-600 text-xs font-semibold text-slate-700 transition">
+                OPD Pass
+              </button>
+              <span class="px-3 py-1 rounded-full text-xs font-bold ${statusBadgeClass(a.status)}">${a.status}</span>
+            </div>
           </div>
         `;
       }).join("");
+    }
+
+    function openOpdPassByIndex(idx) {
+      const a = (window._patientAppointments || [])[idx];
+      if (!a) return;
+      const doc = doctors.find(d => Number(d.id) === Number(a.doctor_id));
+      const dept = departments.find(d => Number(d.id) === Number(a.department_id));
+
+      document.getElementById("passBookingCode").textContent = a.booking_code;
+      document.getElementById("passBranch").textContent = a.hospital_branch;
+      document.getElementById("passPatient").textContent = `${a.patient_name} (${a.patient_phone})`;
+      document.getElementById("passDoctor").textContent = `${doc?.name || "Specialist"} (${dept?.name || doc?.dept_name || "OPD"})`;
+      document.getElementById("passDateTime").textContent = `${a.appointment_date} • ${a.time_slot}`;
+      document.getElementById("passFee").textContent = `Rs. ${doc?.consultation_fee || 500}`;
+
+      const badge = document.getElementById("passStatusBadge");
+      badge.textContent = a.status;
+      badge.className = `px-2.5 py-0.5 rounded-full text-xs font-bold ${statusBadgeClass(a.status)}`;
+
+      const extras = [];
+      if (a.ordered_services) extras.push(`<div class="p-2.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-900"><strong>Ordered Lab / Services:</strong> ${a.ordered_services}</div>`);
+      if (a.doctor_notes) extras.push(`<div class="p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-900"><strong>Doctor Notes:</strong> ${a.doctor_notes}</div>`);
+      document.getElementById("passClinicalExtras").innerHTML = extras.join("");
+
+      const modal = document.getElementById("opdPassModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeOpdPassModal() {
+      document.getElementById("opdPassModal").classList.add("hidden");
+      document.getElementById("opdPassModal").classList.remove("flex");
     }
 
     function updateSessionUI(session) {
@@ -787,7 +1012,7 @@
       }
       if (q.includes("book") || q.includes("appointment") || q.includes("slot") || q.includes("login")) {
         document.getElementById("portal")?.scrollIntoView({ behavior: "smooth" });
-        return "1. Click Login / Sign Up (Google or Email).\n2. Choose your hospital branch, doctor, date, and time slot.\n3. Submit to send your request and track its status under 'Your Sent Appointments'.";
+        return "1. Click Login / Sign Up (Google or Email).\n2. Use the Quick Symptom Matcher or select your doctor, date, and time slot.\n3. Submit to send your request and click 'OPD Pass' to view or print your token.";
       }
       if (q.includes("doctor page") || q.includes("doctor portal") || q.includes("confirm")) {
         return "Doctors can open 'Doctor Page →' in the top navigation bar (doctor.html) to review incoming patient requests and update statuses.";
@@ -840,6 +1065,7 @@
 
     (async () => {
       runHeroCounters();
+      checkJavaStatus();
       const { data: { session } } = await supabaseClient.auth.getSession();
       updateSessionUI(session);
       await loadCatalog();
